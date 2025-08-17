@@ -1,0 +1,1359 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Diário de Bordo Profissional</title>
+    <style>
+        :root {
+            --primary-color: #3498db;
+            --secondary-color: #2980b9;
+            --success-color: #2ecc71;
+            --danger-color: #e74c3c;
+            --warning-color: #f39c12;
+            --light-color: #ecf0f1;
+            --dark-color: #34495e;
+            --background-color: #f9f9f9;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--background-color);
+            color: #333;
+            line-height: 1.6;
+            font-size: 16px;
+        }
+
+        .container {
+            max-width: 100%;
+            padding: 0 15px;
+            margin: 0 auto;
+        }
+
+        header {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 15px 0;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+
+        .nav-toggle {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+
+        nav {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background-color: var(--secondary-color);
+            padding: 10px 0;
+        }
+
+        nav.active {
+            display: block;
+        }
+
+        nav ul {
+            list-style: none;
+        }
+
+        nav ul li {
+            padding: 10px 15px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        nav ul li a {
+            color: white;
+            text-decoration: none;
+            display: block;
+        }
+
+        .section {
+            padding: 20px 0;
+            display: none;
+        }
+
+        .section.active {
+            display: block;
+        }
+
+        .card {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        h2 {
+            color: var(--dark-color);
+            margin-bottom: 20px;
+            font-size: 1.3rem;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: var(--dark-color);
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+
+        textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        .btn {
+            display: inline-block;
+            background-color: var(--primary-color);
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            text-align: center;
+            text-decoration: none;
+            transition: background-color 0.3s;
+        }
+
+        .btn:hover {
+            background-color: var(--secondary-color);
+        }
+
+        .btn-block {
+            display: block;
+            width: 100%;
+        }
+
+        .btn-success {
+            background-color: var(--success-color);
+        }
+
+        .btn-success:hover {
+            background-color: #27ae60;
+        }
+
+        .btn-danger {
+            background-color: var(--danger-color);
+        }
+
+        .btn-danger:hover {
+            background-color: #c0392b;
+        }
+
+        .btn-warning {
+            background-color: var(--warning-color);
+        }
+
+        .btn-warning:hover {
+            background-color: #d35400;
+        }
+
+        .photo-preview {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .photo-thumbnail {
+            width: 80px;
+            height: 80px;
+            object-fit: cover;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+        }
+
+        .activity-list {
+            list-style: none;
+        }
+
+        .activity-item {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            padding: 15px;
+            margin-bottom: 15px;
+            border-left: 4px solid var(--primary-color);
+        }
+
+        .activity-item h3 {
+            color: var(--dark-color);
+            margin-bottom: 10px;
+            font-size: 1.1rem;
+        }
+
+        .activity-meta {
+            display: flex;
+            justify-content: space-between;
+            color: #666;
+            font-size: 0.9rem;
+            margin-bottom: 10px;
+        }
+
+        .activity-details {
+            margin-bottom: 10px;
+        }
+
+        .activity-details p {
+            margin-bottom: 5px;
+        }
+
+        .activity-photos {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 8px;
+            padding: 15px;
+            text-align: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+
+        .stat-value {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: var(--primary-color);
+            margin: 10px 0;
+        }
+
+        .stat-label {
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .chart-container {
+            height: 200px;
+            margin-bottom: 20px;
+            position: relative;
+        }
+
+        .incident-list {
+            list-style: none;
+        }
+
+        .incident-item {
+            padding: 10px 0;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .incident-type {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            background-color: var(--danger-color);
+            color: white;
+        }
+
+        .incident-date {
+            color: #666;
+            font-size: 0.8rem;
+        }
+
+        .filter-bar {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .filter-group {
+            flex: 1;
+            min-width: 120px;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #666;
+        }
+
+        .empty-state i {
+            font-size: 3rem;
+            color: #ddd;
+            margin-bottom: 15px;
+        }
+
+        .tab-bar {
+            display: flex;
+            border-bottom: 1px solid #ddd;
+            margin-bottom: 20px;
+        }
+
+        .tab {
+            padding: 10px 15px;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+        }
+
+        .tab.active {
+            border-bottom: 2px solid var(--primary-color);
+            color: var(--primary-color);
+            font-weight: bold;
+        }
+
+        @media (min-width: 768px) {
+            .container {
+                max-width: 750px;
+            }
+
+            .nav-toggle {
+                display: none;
+            }
+
+            nav {
+                display: block;
+                position: static;
+                background: none;
+                padding: 0;
+            }
+
+            nav ul {
+                display: flex;
+                gap: 20px;
+            }
+
+            nav ul li {
+                padding: 0;
+                border: none;
+            }
+
+            .stats-grid {
+                grid-template-columns: repeat(4, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container header-content">
+            <div class="logo">Diário de Bordo</div>
+            <button class="nav-toggle" id="navToggle">☰</button>
+            <nav id="mainNav">
+                <ul>
+                    <li><a href="#dashboard" class="nav-link">Dashboard</a></li>
+                    <li><a href="#registro" class="nav-link">Registrar Atividade</a></li>
+                    <li><a href="#historico" class="nav-link">Histórico</a></li>
+                    <li><a href="#config" class="nav-link">Configurações</a></li>
+                    <li><a href="#backup" class="nav-link">Backup</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <main class="container">
+        <!-- Dashboard Section -->
+        <section id="dashboard" class="section active">
+            <h2>Dashboard</h2>
+            
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-label">Produção Total</div>
+                    <div class="stat-value" id="totalProduction">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Perdas Totais</div>
+                    <div class="stat-value" id="totalLosses">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Eficiência</div>
+                    <div class="stat-value" id="efficiency">0%</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Atividades Hoje</div>
+                    <div class="stat-value" id="activitiesToday">0</div>
+                </div>
+            </div>
+            
+            <div class="card">
+                <h3>Produção vs Perdas</h3>
+                <div class="chart-container">
+                    <canvas id="productionChart"></canvas>
+                </div>
+            </div>
+            
+            <div class="card">
+                <h3>Últimos Incidentes</h3>
+                <ul class="incident-list" id="incidentList">
+                    <!-- Incident items will be added here -->
+                </ul>
+            </div>
+        </section>
+
+        <!-- Activity Registration Section -->
+        <section id="registro" class="section">
+            <h2>Registrar Nova Atividade</h2>
+            
+            <div class="card">
+                <form id="activityForm">
+                    <div class="form-group">
+                        <label for="activityType">Tipo de Atividade</label>
+                        <select id="activityType" required>
+                            <option value="">Selecione...</option>
+                            <option value="Produção">Produção</option>
+                            <option value="Manutenção">Manutenção</option>
+                            <option value="Qualidade">Controle de Qualidade</option>
+                            <option value="Limpeza">Limpeza e Organização</option>
+                            <option value="Outro">Outro</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="productionQty">Quantidade Produzida</label>
+                        <input type="number" id="productionQty" min="0" step="1" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="lossQty">Quantidade de Perda (se aplicável)</label>
+                        <input type="number" id="lossQty" min="0" step="1" value="0">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="lossType">Tipo de Perda (se aplicável)</label>
+                        <select id="lossType">
+                            <option value="">Nenhuma perda</option>
+                            <option value="Defeito">Defeito de Fabricação</option>
+                            <option value="Matéria-prima">Problema com Matéria-prima</option>
+                            <option value="Equipamento">Falha de Equipamento</option>
+                            <option value="Humano">Erro Humano</option>
+                            <option value="Outro">Outro</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="activityDate">Data e Hora</label>
+                        <input type="datetime-local" id="activityDate" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="activityNotes">Observações</label>
+                        <textarea id="activityNotes" placeholder="Detalhes adicionais sobre a atividade..."></textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Fotos (opcional)</label>
+                        <button type="button" class="btn btn-block" id="takePhotoBtn">Tirar Foto</button>
+                        <input type="file" id="photoUpload" accept="image/*" capture="environment" multiple style="display: none;">
+                        <div class="photo-preview" id="photoPreview"></div>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-success btn-block">Salvar Atividade</button>
+                </form>
+            </div>
+        </section>
+
+        <!-- History Section -->
+        <section id="historico" class="section">
+            <h2>Histórico de Atividades</h2>
+            
+            <div class="card">
+                <div class="filter-bar">
+                    <div class="filter-group">
+                        <label for="filterDate">Data</label>
+                        <input type="date" id="filterDate">
+                    </div>
+                    <div class="filter-group">
+                        <label for="filterType">Tipo</label>
+                        <select id="filterType">
+                            <option value="">Todos</option>
+                            <option value="Produção">Produção</option>
+                            <option value="Manutenção">Manutenção</option>
+                            <option value="Qualidade">Controle de Qualidade</option>
+                            <option value="Limpeza">Limpeza e Organização</option>
+                            <option value="Outro">Outro</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label for="filterLoss">Perda</label>
+                        <select id="filterLoss">
+                            <option value="">Todos</option>
+                            <option value="with">Com Perda</option>
+                            <option value="without">Sem Perda</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label>&nbsp;</label>
+                        <button class="btn btn-block" id="applyFilters">Aplicar</button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card">
+                <div class="tab-bar">
+                    <div class="tab active" data-period="today">Hoje</div>
+                    <div class="tab" data-period="week">Esta Semana</div>
+                    <div class="tab" data-period="month">Este Mês</div>
+                    <div class="tab" data-period="all">Todos</div>
+                </div>
+                
+                <ul class="activity-list" id="activityList">
+                    <!-- Activity items will be added here -->
+                </ul>
+                
+                <div class="empty-state" id="emptyState" style="display: none;">
+                    <div>📭</div>
+                    <h3>Nenhuma atividade encontrada</h3>
+                    <p>Registre sua primeira atividade no botão abaixo</p>
+                    <a href="#registro" class="btn nav-link">Registrar Atividade</a>
+                </div>
+            </div>
+            
+            <div class="card">
+                <h3>Exportar Dados</h3>
+                <button class="btn btn-block" id="exportCSV">Exportar para CSV</button>
+                <button class="btn btn-block" id="exportPDF">Exportar para PDF</button>
+            </div>
+        </section>
+
+        <!-- Config Section -->
+        <section id="config" class="section">
+            <h2>Configurações</h2>
+            
+            <div class="card">
+                <form id="configForm">
+                    <div class="form-group">
+                        <label for="employeeName">Nome do Funcionário</label>
+                        <input type="text" id="employeeName" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="company">Empresa</label>
+                        <input type="text" id="company" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="department">Setor</label>
+                        <input type="text" id="department" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="position">Função</label>
+                        <input type="text" id="position" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="workSchedule">Horário de Trabalho</label>
+                        <input type="text" id="workSchedule" placeholder="Ex: 08:00 - 17:00" required>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-success btn-block">Salvar Configurações</button>
+                </form>
+            </div>
+        </section>
+
+        <!-- Backup Section -->
+        <section id="backup" class="section">
+            <h2>Backup de Dados</h2>
+            
+            <div class="card">
+                <h3>Fazer Backup</h3>
+                <p>Salve seus dados localmente para evitar perdas de informações.</p>
+                <button class="btn btn-block" id="createBackup">Criar Backup Agora</button>
+                <button class="btn btn-success btn-block" id="downloadBackup">Download do Backup</button>
+            </div>
+            
+            <div class="card">
+                <h3>Restaurar Backup</h3>
+                <p>Importe um backup anterior para restaurar seus dados.</p>
+                <div class="form-group">
+                    <label for="backupFile">Selecione o arquivo de backup</label>
+                    <input type="file" id="backupFile" accept=".json">
+                </div>
+                <button class="btn btn-warning btn-block" id="restoreBackup">Restaurar Backup</button>
+                <button class="btn btn-danger btn-block" id="clearData">Limpar Todos os Dados</button>
+            </div>
+        </section>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+    <script>
+        // Wait for DOM to be fully loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            // Global variables
+            let activities = JSON.parse(localStorage.getItem('activities')) || [];
+            let photos = JSON.parse(localStorage.getItem('activityPhotos')) || {};
+            let config = JSON.parse(localStorage.getItem('diaryConfig')) || {
+                employeeName: '',
+                company: '',
+                department: '',
+                position: '',
+                workSchedule: ''
+            };
+            
+            // DOM elements
+            const navToggle = document.getElementById('navToggle');
+            const mainNav = document.getElementById('mainNav');
+            const navLinks = document.querySelectorAll('.nav-link');
+            const sections = document.querySelectorAll('.section');
+            const tabs = document.querySelectorAll('.tab');
+            
+            // Form elements
+            const activityForm = document.getElementById('activityForm');
+            const configForm = document.getElementById('configForm');
+            const takePhotoBtn = document.getElementById('takePhotoBtn');
+            const photoUpload = document.getElementById('photoUpload');
+            const photoPreview = document.getElementById('photoPreview');
+            const activityDate = document.getElementById('activityDate');
+            
+            // Filter elements
+            const filterDate = document.getElementById('filterDate');
+            const filterType = document.getElementById('filterType');
+            const filterLoss = document.getElementById('filterLoss');
+            const applyFilters = document.getElementById('applyFilters');
+            
+            // Backup elements
+            const createBackup = document.getElementById('createBackup');
+            const downloadBackup = document.getElementById('downloadBackup');
+            const restoreBackup = document.getElementById('restoreBackup');
+            const backupFile = document.getElementById('backupFile');
+            const clearData = document.getElementById('clearData');
+            
+            // Export elements
+            const exportCSV = document.getElementById('exportCSV');
+            const exportPDF = document.getElementById('exportPDF');
+            
+            // Dashboard elements
+            const totalProduction = document.getElementById('totalProduction');
+            const totalLosses = document.getElementById('totalLosses');
+            const efficiency = document.getElementById('efficiency');
+            const activitiesToday = document.getElementById('activitiesToday');
+            const incidentList = document.getElementById('incidentList');
+            const activityList = document.getElementById('activityList');
+            const emptyState = document.getElementById('emptyState');
+            
+            // Chart
+            let productionChart;
+            
+            // Initialize the app
+            function initApp() {
+                // Set current date/time in activity form
+                const now = new Date();
+                const timezoneOffset = now.getTimezoneOffset() * 60000;
+                const localISOTime = (new Date(now - timezoneOffset)).toISOString().slice(0, 16);
+                activityDate.value = localISOTime;
+                
+                // Load configuration
+                loadConfig();
+                
+                // Update dashboard
+                updateDashboard();
+                
+                // Load activities
+                loadActivities('today');
+                
+                // Set up event listeners
+                setupEventListeners();
+            }
+            
+            // Set up all event listeners
+            function setupEventListeners() {
+                // Navigation
+                navToggle.addEventListener('click', toggleNav);
+                navLinks.forEach(link => {
+                    link.addEventListener('click', switchSection);
+                });
+                
+                // Tabs
+                tabs.forEach(tab => {
+                    tab.addEventListener('click', function() {
+                        tabs.forEach(t => t.classList.remove('active'));
+                        this.classList.add('active');
+                        loadActivities(this.dataset.period);
+                    });
+                });
+                
+                // Forms
+                activityForm.addEventListener('submit', saveActivity);
+                configForm.addEventListener('submit', saveConfig);
+                
+                // Photos
+                takePhotoBtn.addEventListener('click', function() {
+                    photoUpload.click();
+                });
+                
+                photoUpload.addEventListener('change', handlePhotoUpload);
+                
+                // Filters
+                applyFilters.addEventListener('click', applyActivityFilters);
+                
+                // Backup
+                createBackup.addEventListener('click', createDataBackup);
+                downloadBackup.addEventListener('click', downloadDataBackup);
+                restoreBackup.addEventListener('click', restoreDataBackup);
+                clearData.addEventListener('click', clearAllData);
+                
+                // Export
+                exportCSV.addEventListener('click', exportToCSV);
+                exportPDF.addEventListener('click', exportToPDF);
+            }
+            
+            // Toggle mobile navigation
+            function toggleNav() {
+                mainNav.classList.toggle('active');
+            }
+            
+            // Switch between sections
+            function switchSection(e) {
+                e.preventDefault();
+                
+                // Hide all sections
+                sections.forEach(section => {
+                    section.classList.remove('active');
+                });
+                
+                // Show selected section
+                const sectionId = this.getAttribute('href');
+                document.querySelector(sectionId).classList.add('active');
+                
+                // Close mobile nav if open
+                mainNav.classList.remove('active');
+                
+                // Update dashboard if needed
+                if (sectionId === '#dashboard') {
+                    updateDashboard();
+                }
+                
+                // Scroll to top
+                window.scrollTo(0, 0);
+            }
+            
+            // Load configuration
+            function loadConfig() {
+                document.getElementById('employeeName').value = config.employeeName;
+                document.getElementById('company').value = config.company;
+                document.getElementById('department').value = config.department;
+                document.getElementById('position').value = config.position;
+                document.getElementById('workSchedule').value = config.workSchedule;
+                
+                // Update header if name is set
+                if (config.employeeName) {
+                    document.querySelector('.logo').textContent = `Diário de ${config.employeeName}`;
+                }
+            }
+            
+            // Save configuration
+            function saveConfig(e) {
+                e.preventDefault();
+                
+                config = {
+                    employeeName: document.getElementById('employeeName').value,
+                    company: document.getElementById('company').value,
+                    department: document.getElementById('department').value,
+                    position: document.getElementById('position').value,
+                    workSchedule: document.getElementById('workSchedule').value
+                };
+                
+                localStorage.setItem('diaryConfig', JSON.stringify(config));
+                alert('Configurações salvas com sucesso!');
+                
+                // Update header
+                document.querySelector('.logo').textContent = `Diário de ${config.employeeName}`;
+            }
+            
+            // Save activity
+            function saveActivity(e) {
+                e.preventDefault();
+                
+                const activity = {
+                    id: Date.now(),
+                    type: document.getElementById('activityType').value,
+                    productionQty: parseInt(document.getElementById('productionQty').value),
+                    lossQty: parseInt(document.getElementById('lossQty').value) || 0,
+                    lossType: document.getElementById('lossType').value,
+                    date: document.getElementById('activityDate').value,
+                    notes: document.getElementById('activityNotes').value,
+                    timestamp: new Date().getTime()
+                };
+                
+                // Save photos if any
+                const photoInputs = photoPreview.querySelectorAll('input[type="hidden"]');
+                if (photoInputs.length > 0) {
+                    const activityPhotos = [];
+                    photoInputs.forEach(input => {
+                        activityPhotos.push(input.value);
+                    });
+                    photos[activity.id] = activityPhotos;
+                    localStorage.setItem('activityPhotos', JSON.stringify(photos));
+                }
+                
+                // Add to activities array
+                activities.unshift(activity);
+                localStorage.setItem('activities', JSON.stringify(activities));
+                
+                // Reset form
+                activityForm.reset();
+                photoPreview.innerHTML = '';
+                
+                // Set current date/time again
+                const now = new Date();
+                const timezoneOffset = now.getTimezoneOffset() * 60000;
+                const localISOTime = (new Date(now - timezoneOffset)).toISOString().slice(0, 16);
+                activityDate.value = localISOTime;
+                
+                // Update dashboard and activities list
+                updateDashboard();
+                loadActivities('today');
+                
+                // Switch to dashboard
+                document.querySelector('#dashboard').classList.add('active');
+                document.querySelector('#registro').classList.remove('active');
+                
+                // Scroll to top
+                window.scrollTo(0, 0);
+                
+                // Show success message
+                alert('Atividade registrada com sucesso!');
+            }
+            
+            // Handle photo upload
+            function handlePhotoUpload(e) {
+                const files = e.target.files;
+                
+                for (let i = 0; i < files.length; i++) {
+                    const file = files[i];
+                    const reader = new FileReader();
+                    
+                    reader.onload = function(event) {
+                        // Create thumbnail
+                        const img = document.createElement('img');
+                        img.src = event.target.result;
+                        img.classList.add('photo-thumbnail');
+                        
+                        // Create hidden input to store base64
+                        const input = document.createElement('input');
+                        input.type = 'hidden';
+                        input.value = event.target.result;
+                        
+                        // Add to preview
+                        photoPreview.appendChild(img);
+                        photoPreview.appendChild(input);
+                    };
+                    
+                    reader.readAsDataURL(file);
+                }
+                
+                // Reset file input
+                e.target.value = '';
+            }
+            
+            // Load activities based on period
+            function loadActivities(period) {
+                let filteredActivities = [...activities];
+                
+                // Filter by period
+                const now = new Date();
+                const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+                const oneDay = 24 * 60 * 60 * 1000;
+                
+                switch (period) {
+                    case 'today':
+                        filteredActivities = filteredActivities.filter(activity => {
+                            const activityDate = new Date(activity.date);
+                            return activityDate >= today;
+                        });
+                        break;
+                    case 'week':
+                        const weekAgo = new Date(today - 7 * oneDay);
+                        filteredActivities = filteredActivities.filter(activity => {
+                            const activityDate = new Date(activity.date);
+                            return activityDate >= weekAgo;
+                        });
+                        break;
+                    case 'month':
+                        const monthAgo = new Date(today);
+                        monthAgo.setMonth(monthAgo.getMonth() - 1);
+                        filteredActivities = filteredActivities.filter(activity => {
+                            const activityDate = new Date(activity.date);
+                            return activityDate >= monthAgo;
+                        });
+                        break;
+                    // 'all' shows all activities
+                }
+                
+                // Display activities
+                displayActivities(filteredActivities);
+            }
+            
+            // Apply additional filters
+            function applyActivityFilters() {
+                const dateFilter = filterDate.value;
+                const typeFilter = filterType.value;
+                const lossFilter = filterLoss.value;
+                
+                let filteredActivities = [...activities];
+                
+                // Filter by date if set
+                if (dateFilter) {
+                    const filterDateObj = new Date(dateFilter);
+                    filteredActivities = filteredActivities.filter(activity => {
+                        const activityDate = new Date(activity.date);
+                        return activityDate.toDateString() === filterDateObj.toDateString();
+                    });
+                }
+                
+                // Filter by type if set
+                if (typeFilter) {
+                    filteredActivities = filteredActivities.filter(activity => activity.type === typeFilter);
+                }
+                
+                // Filter by loss if set
+                if (lossFilter === 'with') {
+                    filteredActivities = filteredActivities.filter(activity => activity.lossQty > 0);
+                } else if (lossFilter === 'without') {
+                    filteredActivities = filteredActivities.filter(activity => activity.lossQty === 0);
+                }
+                
+                // Display filtered activities
+                displayActivities(filteredActivities);
+            }
+            
+            // Display activities in the list
+            function displayActivities(activitiesToDisplay) {
+                activityList.innerHTML = '';
+                
+                if (activitiesToDisplay.length === 0) {
+                    emptyState.style.display = 'block';
+                    return;
+                }
+                
+                emptyState.style.display = 'none';
+                
+                activitiesToDisplay.forEach(activity => {
+                    const activityDate = new Date(activity.date);
+                    const formattedDate = activityDate.toLocaleDateString('pt-BR', {
+                        day: '2-digit',
+                        month: '2-digit',
+                        year: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                    });
+                    
+                    const activityItem = document.createElement('li');
+                    activityItem.className = 'activity-item';
+                    
+                    let photosHTML = '';
+                    if (photos[activity.id] && photos[activity.id].length > 0) {
+                        photosHTML = `<div class="activity-photos">
+                            ${photos[activity.id].slice(0, 3).map(photo => 
+                                `<img src="${photo}" class="photo-thumbnail" alt="Foto da atividade">`
+                            ).join('')}
+                            ${photos[activity.id].length > 3 ? `<span>+${photos[activity.id].length - 3} mais</span>` : ''}
+                        </div>`;
+                    }
+                    
+                    let lossHTML = '';
+                    if (activity.lossQty > 0) {
+                        lossHTML = `<p><strong>Perda:</strong> ${activity.lossQty} (${activity.lossType})</p>`;
+                    }
+                    
+                    activityItem.innerHTML = `
+                        <h3>${activity.type}</h3>
+                        <div class="activity-meta">
+                            <span>${formattedDate}</span>
+                            <span>Produção: ${activity.productionQty}</span>
+                        </div>
+                        <div class="activity-details">
+                            ${lossHTML}
+                            <p><strong>Observações:</strong> ${activity.notes || 'Nenhuma'}</p>
+                        </div>
+                        ${photosHTML}
+                    `;
+                    
+                    activityList.appendChild(activityItem);
+                });
+            }
+            
+            // Update dashboard statistics
+            function updateDashboard() {
+                // Calculate totals
+                const totalProd = activities.reduce((sum, activity) => sum + activity.productionQty, 0);
+                const totalLoss = activities.reduce((sum, activity) => sum + activity.lossQty, 0);
+                const eff = totalProd > 0 ? Math.round(((totalProd - totalLoss) / totalProd) * 100) : 0;
+                
+                // Today's activities count
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                const todayActivities = activities.filter(activity => {
+                    const activityDate = new Date(activity.date);
+                    return activityDate >= today;
+                }).length;
+                
+                // Update UI
+                totalProduction.textContent = totalProd;
+                totalLosses.textContent = totalLoss;
+                efficiency.textContent = `${eff}%`;
+                activitiesToday.textContent = todayActivities;
+                
+                // Update incidents list
+                updateIncidentsList();
+                
+                // Update chart
+                updateProductionChart();
+            }
+            
+            // Update incidents list
+            function updateIncidentsList() {
+                incidentList.innerHTML = '';
+                
+                // Get activities with losses
+                const incidents = activities
+                    .filter(activity => activity.lossQty > 0)
+                    .sort((a, b) => new Date(b.date) - new Date(a.date))
+                    .slice(0, 5);
+                
+                if (incidents.length === 0) {
+                    incidentList.innerHTML = '<li class="incident-item">Nenhum incidente registrado</li>';
+                    return;
+                }
+                
+                incidents.forEach(incident => {
+                    const incidentDate = new Date(incident.date);
+                    const formattedDate = incidentDate.toLocaleDateString('pt-BR', {
+                        day: '2-digit',
+                        month: '2-digit',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                    });
+                    
+                    const incidentItem = document.createElement('li');
+                    incidentItem.className = 'incident-item';
+                    incidentItem.innerHTML = `
+                        <div>
+                            <span class="incident-type">${incident.lossType}</span>
+                            <span>${incident.type} (Perda: ${incident.lossQty})</span>
+                        </div>
+                        <span class="incident-date">${formattedDate}</span>
+                    `;
+                    
+                    incidentList.appendChild(incidentItem);
+                });
+            }
+            
+            // Update production chart
+            function updateProductionChart() {
+                const ctx = document.getElementById('productionChart').getContext('2d');
+                
+                // Group by month
+                const monthlyData = {};
+                activities.forEach(activity => {
+                    const date = new Date(activity.date);
+                    const monthYear = `${date.getMonth() + 1}/${date.getFullYear()}`;
+                    
+                    if (!monthlyData[monthYear]) {
+                        monthlyData[monthYear] = {
+                            production: 0,
+                            loss: 0
+                        };
+                    }
+                    
+                    monthlyData[monthYear].production += activity.productionQty;
+                    monthlyData[monthYear].loss += activity.lossQty;
+                });
+                
+                // Sort by date
+                const sortedMonths = Object.keys(monthlyData).sort((a, b) => {
+                    const [monthA, yearA] = a.split('/').map(Number);
+                    const [monthB, yearB] = b.split('/').map(Number);
+                    return new Date(yearA, monthA - 1) - new Date(yearB, monthB - 1);
+                });
+                
+                // Prepare chart data
+                const labels = sortedMonths;
+                const productionData = sortedMonths.map(month => monthlyData[month].production);
+                const lossData = sortedMonths.map(month => monthlyData[month].loss);
+                
+                // Destroy previous chart if exists
+                if (productionChart) {
+                    productionChart.destroy();
+                }
+                
+                // Create new chart
+                productionChart = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: labels,
+                        datasets: [
+                            {
+                                label: 'Produção',
+                                data: productionData,
+                                backgroundColor: 'rgba(52, 152, 219, 0.7)',
+                                borderColor: 'rgba(52, 152, 219, 1)',
+                                borderWidth: 1
+                            },
+                            {
+                                label: 'Perdas',
+                                data: lossData,
+                                backgroundColor: 'rgba(231, 76, 60, 0.7)',
+                                borderColor: 'rgba(231, 76, 60, 1)',
+                                borderWidth: 1
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: {
+                                beginAtZero: true
+                            }
+                        }
+                    }
+                });
+            }
+            
+            // Create data backup
+            function createDataBackup() {
+                const backup = {
+                    activities: activities,
+                    photos: photos,
+                    config: config,
+                    timestamp: new Date().getTime()
+                };
+                
+                localStorage.setItem('lastBackup', JSON.stringify(backup));
+                alert('Backup criado com sucesso!');
+            }
+            
+            // Download data backup
+            function downloadDataBackup() {
+                const backup = {
+                    activities: activities,
+                    photos: photos,
+                    config: config,
+                    timestamp: new Date().getTime()
+                };
+                
+                const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(backup));
+                const downloadAnchor = document.createElement('a');
+                downloadAnchor.setAttribute('href', dataStr);
+                downloadAnchor.setAttribute('download', `diario_bordo_backup_${new Date().toISOString().slice(0, 10)}.json`);
+                document.body.appendChild(downloadAnchor);
+                downloadAnchor.click();
+                document.body.removeChild(downloadAnchor);
+            }
+            
+            // Restore data backup
+            function restoreDataBackup() {
+                if (!backupFile.files.length) {
+                    alert('Por favor, selecione um arquivo de backup primeiro.');
+                    return;
+                }
+                
+                const file = backupFile.files[0];
+                const reader = new FileReader();
+                
+                reader.onload = function(event) {
+                    try {
+                        const backup = JSON.parse(event.target.result);
+                        
+                        if (!backup.activities || !backup.config) {
+                            throw new Error('Formato de backup inválido');
+                        }
+                        
+                        if (confirm('Isso substituirá todos os dados atuais. Tem certeza?')) {
+                            activities = backup.activities;
+                            photos = backup.photos || {};
+                            config = backup.config;
+                            
+                            localStorage.setItem('activities', JSON.stringify(activities));
+                            localStorage.setItem('activityPhotos', JSON.stringify(photos));
+                            localStorage.setItem('diaryConfig', JSON.stringify(config));
+                            
+                            // Update UI
+                            loadConfig();
+                            updateDashboard();
+                            loadActivities('today');
+                            
+                            alert('Backup restaurado com sucesso!');
+                        }
+                    } catch (e) {
+                        alert('Erro ao restaurar backup: ' + e.message);
+                    }
+                };
+                
+                reader.readAsText(file);
+            }
+            
+            // Clear all data
+            function clearAllData() {
+                if (confirm('Isso apagará TODOS os dados permanentemente. Tem certeza?')) {
+                    activities = [];
+                    photos = {};
+                    config = {
+                        employeeName: '',
+                        company: '',
+                        department: '',
+                        position: '',
+                        workSchedule: ''
+                    };
+                    
+                    localStorage.removeItem('activities');
+                    localStorage.removeItem('activityPhotos');
+                    localStorage.removeItem('diaryConfig');
+                    
+                    // Update UI
+                    loadConfig();
+                    updateDashboard();
+                    loadActivities('today');
+                    
+                    alert('Todos os dados foram apagados.');
+                }
+            }
+            
+            // Export to CSV
+            function exportToCSV() {
+                let csv = 'Tipo,Produção,Perda,Tipo de Perda,Data,Observações\n';
+                
+                activities.forEach(activity => {
+                    csv += `"${activity.type}",`;
+                    csv += `"${activity.productionQty}",`;
+                    csv += `"${activity.lossQty}",`;
+                    csv += `"${activity.lossType || 'N/A'}",`;
+                    csv += `"${new Date(activity.date).toLocaleString('pt-BR')}",`;
+                    csv += `"${activity.notes.replace(/"/g, '""') || 'Nenhuma'}"\n`;
+                });
+                
+                const dataStr = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
+                const downloadAnchor = document.createElement('a');
+                downloadAnchor.setAttribute('href', dataStr);
+                downloadAnchor.setAttribute('download', `diario_bordo_export_${new Date().toISOString().slice(0, 10)}.csv`);
+                document.body.appendChild(downloadAnchor);
+                downloadAnchor.click();
+                document.body.removeChild(downloadAnchor);
+            }
+            
+            // Export to PDF
+            function exportToPDF() {
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF();
+                
+                // Add title
+                doc.setFontSize(18);
+                doc.text('Relatório de Atividades', 105, 15, { align: 'center' });
+                
+                // Add subtitle with date range
+                doc.setFontSize(12);
+                const firstDate = activities.length > 0 ? 
+                    new Date(activities[activities.length - 1].date).toLocaleDateString('pt-BR') : 'N/A';
+                const lastDate = activities.length > 0 ? 
+                    new Date(activities[0].date).toLocaleDateString('pt-BR') : 'N/A';
+                doc.text(`Período: ${firstDate} a ${lastDate}`, 105, 22, { align: 'center' });
+                
+                // Add employee info if available
+                if (config.employeeName) {
+                    doc.text(`Funcionário: ${config.employeeName}`, 14, 30);
+                }
+                if (config.company) {
+                    doc.text(`Empresa: ${config.company}`, 14, 37);
+                }
+                
+                // Add summary table
+                const totalProd = activities.reduce((sum, activity) => sum + activity.productionQty, 0);
+                const totalLoss = activities.reduce((sum, activity) => sum + activity.lossQty, 0);
+                const eff = totalProd > 0 ? Math.round(((totalProd - totalLoss) / totalProd) * 100) : 0;
+                
+                doc.autoTable({
+                    startY: 45,
+                    head: [['Resumo', 'Valor']],
+                    body: [
+                        ['Total de Atividades', activities.length],
+                        ['Produção Total', totalProd],
+                        ['Perdas Totais', totalLoss],
+                        ['Eficiência', `${eff}%`]
+                    ],
+                    theme: 'grid',
+                    headStyles: { fillColor: [52, 152, 219] }
+                });
+                
+                // Add activities table
+                const activityData = activities.map(activity => [
+                    activity.type,
+                    activity.productionQty,
+                    activity.lossQty > 0 ? `${activity.lossQty} (${activity.lossType})` : 'Nenhuma',
+                    new Date(activity.date).toLocaleString('pt-BR'),
+                    activity.notes || 'Nenhuma'
+                ]);
+                
+                doc.autoTable({
+                    startY: doc.lastAutoTable.finalY + 15,
+                    head: [['Tipo', 'Produção', 'Perda', 'Data', 'Observações']],
+                    body: activityData,
+                    theme: 'grid',
+                    headStyles: { fillColor: [52, 152, 219] },
+                    styles: { fontSize: 8 },
+                    columnStyles: {
+                        0: { cellWidth: 30 },
+                        1: { cellWidth: 20 },
+                        2: { cellWidth: 30 },
+                        3: { cellWidth: 40 },
+                        4: { cellWidth: 'auto' }
+                    }
+                });
+                
+                // Save the PDF
+                doc.save(`diario_bordo_${new Date().toISOString().slice(0, 10)}.pdf`);
+            }
+            
+            // Initialize the app
+            initApp();
+        });
+    </script>
+</body>
+</html>
