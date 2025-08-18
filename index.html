@@ -3,24 +3,38 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Diário de Bordo Profissional</title>
+    <title>Work Manager Profissional</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {
             --primary-color: #3498db;
-            --secondary-color: #2980b9;
+            --primary-light: #5dade2;
+            --primary-dark: #2980b9;
+            --secondary-color: #2c3e50;
             --success-color: #2ecc71;
+            --success-dark: #27ae60;
             --danger-color: #e74c3c;
+            --danger-dark: #c0392b;
             --warning-color: #f39c12;
+            --warning-dark: #d35400;
             --light-color: #ecf0f1;
             --dark-color: #34495e;
-            --background-color: #f9f9f9;
+            --gray-light: #bdc3c7;
+            --gray-dark: #7f8c8d;
+            --background-color: #f5f7fa;
+            --sidebar-width: 280px;
+            --header-height: 60px;
+            --transition-speed: 0.3s;
+            --shadow-sm: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+            --shadow-md: 0 4px 6px rgba(0,0,0,0.1), 0 1px 3px rgba(0,0,0,0.08);
+            --shadow-lg: 0 10px 20px rgba(0,0,0,0.1), 0 6px 6px rgba(0,0,0,0.1);
         }
 
         * {
             box-sizing: border-box;
             margin: 0;
             padding: 0;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
         }
 
         body {
@@ -28,135 +42,290 @@
             color: #333;
             line-height: 1.6;
             font-size: 16px;
+            overflow-x: hidden;
+            transition: padding-left var(--transition-speed) ease;
         }
 
-        .container {
-            max-width: 100%;
-            padding: 0 15px;
-            margin: 0 auto;
-        }
-
-        header {
-            background-color: var(--primary-color);
-            color: white;
-            padding: 15px 0;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-            position: sticky;
+        /* Sidebar Styles */
+        .sidebar {
+            position: fixed;
             top: 0;
+            left: 0;
+            width: var(--sidebar-width);
+            height: 100vh;
+            background-color: var(--secondary-color);
+            color: white;
+            transform: translateX(-100%);
+            transition: transform var(--transition-speed) ease;
+            z-index: 1000;
+            box-shadow: var(--shadow-lg);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sidebar.active {
+            transform: translateX(0);
+        }
+
+        .sidebar-header {
+            padding: 20px;
+            background-color: rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .sidebar-logo {
+            font-size: 1.3rem;
+            font-weight: bold;
+            color: white;
+        }
+
+        .close-sidebar {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.5rem;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+        }
+
+        .close-sidebar:hover {
+            transform: rotate(90deg);
+        }
+
+        .sidebar-menu {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px 0;
+        }
+
+        .sidebar-menu ul {
+            list-style: none;
+        }
+
+        .sidebar-menu li {
+            margin-bottom: 5px;
+        }
+
+        .sidebar-menu a {
+            display: flex;
+            align-items: center;
+            padding: 12px 20px;
+            color: rgba(255,255,255,0.8);
+            text-decoration: none;
+            transition: all 0.2s ease;
+        }
+
+        .sidebar-menu a:hover, .sidebar-menu a.active {
+            background-color: rgba(0,0,0,0.2);
+            color: white;
+        }
+
+        .sidebar-menu i {
+            margin-right: 10px;
+            width: 20px;
+            text-align: center;
+        }
+
+        .sidebar-footer {
+            padding: 15px;
+            text-align: center;
+            font-size: 0.8rem;
+            color: rgba(255,255,255,0.6);
+            border-top: 1px solid rgba(255,255,255,0.1);
+        }
+
+        /* Overlay for sidebar */
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            z-index: 999;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity var(--transition-speed) ease, visibility var(--transition-speed) ease;
+        }
+
+        .overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        /* Header Styles */
+        header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: var(--header-height);
+            background-color: white;
+            box-shadow: var(--shadow-sm);
             z-index: 100;
+            display: flex;
+            align-items: center;
+            padding: 0 20px;
+            transition: left var(--transition-speed) ease;
         }
 
         .header-content {
+            width: 100%;
             display: flex;
             justify-content: space-between;
             align-items: center;
         }
 
         .logo {
-            font-size: 1.5rem;
+            font-size: 1.3rem;
             font-weight: bold;
+            color: var(--primary-color);
         }
 
         .nav-toggle {
             background: none;
             border: none;
-            color: white;
+            color: var(--dark-color);
             font-size: 1.5rem;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+        }
+
+        .nav-toggle:hover {
+            transform: scale(1.1);
+        }
+
+        .user-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background-color: var(--primary-color);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
             cursor: pointer;
         }
 
-        nav {
-            display: none;
-            position: absolute;
-            top: 100%;
-            left: 0;
-            right: 0;
-            background-color: var(--secondary-color);
-            padding: 10px 0;
+        /* Main Content Styles */
+        main {
+            margin-top: var(--header-height);
+            padding: 20px;
+            transition: padding-left var(--transition-speed) ease;
         }
 
-        nav.active {
-            display: block;
+        .container {
+            max-width: 100%;
+            margin: 20px 0 0 0 ;
         }
 
-        nav ul {
-            list-style: none;
-        }
-
-        nav ul li {
-            padding: 10px 15px;
-            border-bottom: 1px solid rgba(255,255,255,0.1);
-        }
-
-        nav ul li a {
-            color: white;
-            text-decoration: none;
-            display: block;
-        }
-
+        /* Section Styles */
         .section {
             padding: 20px 0;
             display: none;
+            animation: fadeIn 0.5s ease;
         }
 
         .section.active {
             display: block;
         }
 
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Card Styles */
         .card {
             background: white;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            border-radius: 10px;
+            box-shadow: var(--shadow-sm);
             padding: 20px;
             margin-bottom: 20px;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
         }
 
         h2 {
             color: var(--dark-color);
             margin-bottom: 20px;
-            font-size: 1.3rem;
+            font-size: 1.5rem;
+            font-weight: 600;
         }
 
-        .form-group {
+        h3 {
+            color: var(--dark-color);
             margin-bottom: 15px;
+            font-size: 1.2rem;
+            font-weight: 500;
+        }
+
+        /* Form Styles */
+        .form-group {
+            margin-bottom: 20px;
         }
 
         label {
             display: block;
-            margin-bottom: 5px;
-            font-weight: 600;
+            margin-bottom: 8px;
+            font-weight: 500;
             color: var(--dark-color);
         }
 
         input, select, textarea {
             width: 100%;
-            padding: 10px;
+            padding: 12px 15px;
             border: 1px solid #ddd;
-            border-radius: 4px;
+            border-radius: 6px;
             font-size: 16px;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+            outline: none;
         }
 
         textarea {
-            min-height: 100px;
+            min-height: 120px;
             resize: vertical;
         }
 
+        /* Button Styles */
         .btn {
             display: inline-block;
             background-color: var(--primary-color);
             color: white;
-            padding: 10px 20px;
+            padding: 12px 20px;
             border: none;
-            border-radius: 4px;
+            border-radius: 6px;
             cursor: pointer;
             font-size: 16px;
+            font-weight: 500;
             text-align: center;
             text-decoration: none;
-            transition: background-color 0.3s;
+            transition: all 0.2s ease;
+            box-shadow: var(--shadow-sm);
+            margin: 8px;
         }
 
         .btn:hover {
-            background-color: var(--secondary-color);
+            background-color: var(--primary-dark);
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+            box-shadow: var(--shadow-sm);
         }
 
         .btn-block {
@@ -169,7 +338,7 @@
         }
 
         .btn-success:hover {
-            background-color: #27ae60;
+            background-color: var(--success-dark);
         }
 
         .btn-danger {
@@ -177,7 +346,7 @@
         }
 
         .btn-danger:hover {
-            background-color: #c0392b;
+            background-color: var(--danger-dark);
         }
 
         .btn-warning {
@@ -185,9 +354,20 @@
         }
 
         .btn-warning:hover {
-            background-color: #d35400;
+            background-color: var(--warning-dark);
         }
 
+        .btn-outline {
+            background-color: transparent;
+            border: 1px solid var(--primary-color);
+            color: var(--primary-color);
+        }
+
+        .btn-outline:hover {
+            background-color: rgba(52, 152, 219, 0.1);
+        }
+
+        /* Photo Preview Styles */
         .photo-preview {
             display: flex;
             flex-wrap: wrap;
@@ -199,10 +379,17 @@
             width: 80px;
             height: 80px;
             object-fit: cover;
-            border-radius: 4px;
+            border-radius: 6px;
             border: 1px solid #ddd;
+            transition: transform 0.2s ease;
+            cursor: pointer;
         }
 
+        .photo-thumbnail:hover {
+            transform: scale(1.05);
+        }
+
+        /* Activity List Styles */
         .activity-list {
             list-style: none;
         }
@@ -210,10 +397,16 @@
         .activity-item {
             background: white;
             border-radius: 8px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            box-shadow: var(--shadow-sm);
             padding: 15px;
             margin-bottom: 15px;
             border-left: 4px solid var(--primary-color);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .activity-item:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
         }
 
         .activity-item h3 {
@@ -225,7 +418,7 @@
         .activity-meta {
             display: flex;
             justify-content: space-between;
-            color: #666;
+            color: var(--gray-dark);
             font-size: 0.9rem;
             margin-bottom: 10px;
         }
@@ -235,7 +428,8 @@
         }
 
         .activity-details p {
-            margin-bottom: 5px;
+            margin-bottom: 8px;
+            color: #555;
         }
 
         .activity-photos {
@@ -245,6 +439,7 @@
             margin-top: 10px;
         }
 
+        /* Stats Grid Styles */
         .stats-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -254,10 +449,16 @@
 
         .stat-card {
             background: white;
-            border-radius: 8px;
-            padding: 15px;
+            border-radius: 10px;
+            padding: 20px;
             text-align: center;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            box-shadow: var(--shadow-sm);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-3px);
+            box-shadow: var(--shadow-md);
         }
 
         .stat-value {
@@ -268,31 +469,38 @@
         }
 
         .stat-label {
-            color: #666;
+            color: var(--gray-dark);
             font-size: 0.9rem;
         }
 
+        /* Chart Styles */
         .chart-container {
-            height: 200px;
+            height: 250px;
             margin-bottom: 20px;
             position: relative;
         }
 
+        /* Incident List Styles */
         .incident-list {
             list-style: none;
         }
 
         .incident-item {
-            padding: 10px 0;
+            padding: 12px 0;
             border-bottom: 1px solid #eee;
             display: flex;
             justify-content: space-between;
             align-items: center;
+            transition: background-color 0.2s ease;
+        }
+
+        .incident-item:hover {
+            background-color: rgba(0,0,0,0.02);
         }
 
         .incident-type {
             display: inline-block;
-            padding: 3px 8px;
+            padding: 4px 10px;
             border-radius: 4px;
             font-size: 0.8rem;
             font-weight: bold;
@@ -301,15 +509,16 @@
         }
 
         .incident-date {
-            color: #666;
+            color: var(--gray-dark);
             font-size: 0.8rem;
         }
 
+        /* Filter Bar Styles */
         .filter-bar {
-            display: flex;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
             gap: 10px;
             margin-bottom: 20px;
-            flex-wrap: wrap;
         }
 
         .filter-group {
@@ -317,118 +526,293 @@
             min-width: 120px;
         }
 
+        /* Empty State Styles */
         .empty-state {
             text-align: center;
             padding: 40px 20px;
-            color: #666;
+            color: var(--gray-dark);
         }
 
         .empty-state i {
             font-size: 3rem;
-            color: #ddd;
+            color: var(--gray-light);
             margin-bottom: 15px;
+            opacity: 0.6;
         }
 
+        .empty-state h3 {
+            margin-bottom: 10px;
+            color: var(--dark-color);
+        }
+
+        .empty-state p {
+            margin-bottom: 20px;
+        }
+
+        /* Tab Bar Styles */
         .tab-bar {
             display: flex;
             border-bottom: 1px solid #ddd;
             margin-bottom: 20px;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
         }
 
         .tab {
-            padding: 10px 15px;
+            padding: 12px 16px;
             cursor: pointer;
-            border-bottom: 2px solid transparent;
+            border-bottom: 3px solid transparent;
+            white-space: nowrap;
+            transition: all 0.2s ease;
+        }
+
+        .tab:hover {
+            color: var(--primary-color);
         }
 
         .tab.active {
-            border-bottom: 2px solid var(--primary-color);
+            border-bottom: 3px solid var(--primary-color);
             color: var(--primary-color);
-            font-weight: bold;
+            font-weight: 500;
         }
 
+        /* Responsive Styles */
         @media (min-width: 768px) {
-            .container {
-                max-width: 750px;
+            body {
+                padding-left: 0;
+            }
+
+            .sidebar {
+                transform: translateX(-100%);
+            }
+
+            .sidebar.active {
+                transform: translateX(0);
+            }
+
+            .overlay.active {
+                opacity: 1;
+                visibility: visible;
+            }
+
+            .stats-grid {
+                grid-template-columns: repeat(4, 1fr);
+            }
+
+            .filter-bar {
+                grid-template-columns: repeat(4, 1fr);
+            }
+        }
+
+        @media (min-width: 992px) {
+            body {
+                padding-left: var(--sidebar-width);
+            }
+
+            header {
+                left: var(--sidebar-width);
+            }
+
+            .sidebar {
+                transform: translateX(0);
             }
 
             .nav-toggle {
                 display: none;
             }
 
-            nav {
-                display: block;
-                position: static;
-                background: none;
-                padding: 0;
+            .overlay {
+                display: none;
             }
 
-            nav ul {
-                display: flex;
-                gap: 20px;
-            }
-
-            nav ul li {
-                padding: 0;
-                border: none;
-            }
-
-            .stats-grid {
-                grid-template-columns: repeat(4, 1fr);
+            .container {
+                max-width: 900px;
             }
         }
+
+        /* Animation for toast messages */
+        @keyframes slideIn {
+            from { transform: translateY(20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        @keyframes slideOut {
+            from { transform: translateY(0); opacity: 1; }
+            to { transform: translateY(20px); opacity: 0; }
+        }
+
+        /* Toast notification */
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background-color: var(--success-color);
+            color: white;
+            padding: 12px 20px;
+            border-radius: 6px;
+            box-shadow: var(--shadow-lg);
+            z-index: 1100;
+            display: flex;
+            align-items: center;
+            animation: slideIn 0.3s ease forwards;
+        }
+
+        .toast.hide {
+            animation: slideOut 0.3s ease forwards;
+        }
+
+        .toast i {
+            margin-right: 10px;
+        }
+
+        /* Modal Styles */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1100;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .modal.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal-content {
+            background-color: white;
+            border-radius: 10px;
+            width: 90%;
+            max-width: 500px;
+            max-height: 90vh;
+            overflow-y: auto;
+            transform: translateY(20px);
+            transition: transform 0.3s ease;
+            box-shadow: var(--shadow-lg);
+        }
+
+        .modal.active .modal-content {
+            transform: translateY(0);
+        }
+
+        .modal-header {
+            padding: 15px 20px;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-title {
+            font-size: 1.2rem;
+            font-weight: 500;
+            color: var(--dark-color);
+        }
+
+        .close-modal {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--gray-dark);
+        }
+
+        .modal-body {
+            padding: 20px;
+        }
+
+        .modal-footer {
+            padding: 15px 20px;
+            border-top: 1px solid #eee;
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+        .fa-plus-circle{
+            
+            padding: 0;
+        }
+
+       
     </style>
 </head>
 <body>
+    <!-- Sidebar Navigation -->
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <div class="sidebar-logo" id="sidebarLogo">Work Manager</div>
+            <button class="close-sidebar" id="closeSidebar">&times;</button>
+        </div>
+        <div class="sidebar-menu">
+            <ul>
+                <li><a href="#dashboard" class="nav-link active"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
+                <li><a href="#registro" class="nav-link"><i class="fas fa-plus-circle" ></i> Registrar Atividade</a></li>
+                <li><a href="#historico" class="nav-link"><i class="fas fa-history"></i> Histórico</a></li>
+                <li><a href="#config" class="nav-link"><i class="fas fa-cog"></i> Configurações</a></li>
+                <li><a href="#backup" class="nav-link"><i class="fas fa-database"></i> Backup</a></li>
+            </ul>
+        </div>
+        <div class="sidebar-footer">
+            Work Manager Profissional &copy; 2023
+        </div>
+    </div>
+
+    <!-- Overlay for sidebar -->
+    <div class="overlay" id="overlay"></div>
+
+    <!-- Header -->
     <header>
-        <div class="container header-content">
-            <div class="logo">Diário de Bordo</div>
-            <button class="nav-toggle" id="navToggle">☰</button>
-            <nav id="mainNav">
-                <ul>
-                    <li><a href="#dashboard" class="nav-link">Dashboard</a></li>
-                    <li><a href="#registro" class="nav-link">Registrar Atividade</a></li>
-                    <li><a href="#historico" class="nav-link">Histórico</a></li>
-                    <li><a href="#config" class="nav-link">Configurações</a></li>
-                    <li><a href="#backup" class="nav-link">Backup</a></li>
-                </ul>
-            </nav>
+        <div class="header-content">
+            <button class="nav-toggle" id="navToggle">
+                <i class="fas fa-bars"></i>
+            </button>
+            <div class="logo" id="mainLogo">Work Manager</div>
+            <div class="user-avatar" id="userAvatar">U</div>
         </div>
     </header>
 
+    <!-- Main Content -->
     <main class="container">
         <!-- Dashboard Section -->
         <section id="dashboard" class="section active">
-            <h2>Dashboard</h2>
+            <h2><i class="fas fa-tachometer-alt"></i> Dashboard</h2>
             
             <div class="stats-grid">
                 <div class="stat-card">
-                    <div class="stat-label">Produção Total</div>
+                    <div class="stat-label"><i class="fas fa-boxes"></i> Produção Total</div>
                     <div class="stat-value" id="totalProduction">0</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-label">Perdas Totais</div>
+                    <div class="stat-label"><i class="fas fa-times-circle"></i> Perdas Totais</div>
                     <div class="stat-value" id="totalLosses">0</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-label">Eficiência</div>
+                    <div class="stat-label"><i class="fas fa-chart-line"></i> Eficiência</div>
                     <div class="stat-value" id="efficiency">0%</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-label">Atividades Hoje</div>
+                    <div class="stat-label"><i class="fas fa-calendar-day"></i> Atividades Hoje</div>
                     <div class="stat-value" id="activitiesToday">0</div>
                 </div>
             </div>
             
             <div class="card">
-                <h3>Produção vs Perdas</h3>
+                <h3><i class="fas fa-chart-bar"></i> Produção vs Perdas</h3>
                 <div class="chart-container">
                     <canvas id="productionChart"></canvas>
                 </div>
             </div>
             
             <div class="card">
-                <h3>Últimos Incidentes</h3>
+                <h3><i class="fas fa-exclamation-triangle"></i> Últimos Incidentes</h3>
                 <ul class="incident-list" id="incidentList">
                     <!-- Incident items will be added here -->
                 </ul>
@@ -437,12 +821,12 @@
 
         <!-- Activity Registration Section -->
         <section id="registro" class="section">
-            <h2>Registrar Nova Atividade</h2>
+            <h2><i class="fas fa-plus-circle"></i> Registrar Nova Atividade</h2>
             
             <div class="card">
                 <form id="activityForm">
                     <div class="form-group">
-                        <label for="activityType">Tipo de Atividade</label>
+                        <label for="activityType"><i class="fas fa-tasks"></i> Tipo de Atividade</label>
                         <select id="activityType" required>
                             <option value="">Selecione...</option>
                             <option value="Produção">Produção</option>
@@ -454,17 +838,17 @@
                     </div>
                     
                     <div class="form-group">
-                        <label for="productionQty">Quantidade Produzida</label>
+                        <label for="productionQty"><i class="fas fa-box-open"></i> Quantidade Produzida</label>
                         <input type="number" id="productionQty" min="0" step="1" required>
                     </div>
                     
                     <div class="form-group">
-                        <label for="lossQty">Quantidade de Perda (se aplicável)</label>
+                        <label for="lossQty"><i class="fas fa-times-circle"></i> Quantidade de Perda (se aplicável)</label>
                         <input type="number" id="lossQty" min="0" step="1" value="0">
                     </div>
                     
                     <div class="form-group">
-                        <label for="lossType">Tipo de Perda (se aplicável)</label>
+                        <label for="lossType"><i class="fas fa-exclamation-circle"></i> Tipo de Perda (se aplicável)</label>
                         <select id="lossType">
                             <option value="">Nenhuma perda</option>
                             <option value="Defeito">Defeito de Fabricação</option>
@@ -476,39 +860,43 @@
                     </div>
                     
                     <div class="form-group">
-                        <label for="activityDate">Data e Hora</label>
+                        <label for="activityDate"><i class="far fa-calendar-alt"></i> Data e Hora</label>
                         <input type="datetime-local" id="activityDate" required>
                     </div>
                     
                     <div class="form-group">
-                        <label for="activityNotes">Observações</label>
+                        <label for="activityNotes"><i class="far fa-comment-alt"></i> Observações</label>
                         <textarea id="activityNotes" placeholder="Detalhes adicionais sobre a atividade..."></textarea>
                     </div>
                     
                     <div class="form-group">
-                        <label>Fotos (opcional)</label>
-                        <button type="button" class="btn btn-block" id="takePhotoBtn">Tirar Foto</button>
+                        <label><i class="fas fa-camera"></i> Fotos (opcional)</label>
+                        <button type="button" class="btn btn-block" id="takePhotoBtn">
+                            <i class="fas fa-camera"></i> Tirar Foto
+                        </button>
                         <input type="file" id="photoUpload" accept="image/*" capture="environment" multiple style="display: none;">
                         <div class="photo-preview" id="photoPreview"></div>
                     </div>
                     
-                    <button type="submit" class="btn btn-success btn-block">Salvar Atividade</button>
+                    <button type="submit" class="btn btn-success btn-block">
+                        <i class="fas fa-save"></i> Salvar Atividade
+                    </button>
                 </form>
             </div>
         </section>
 
         <!-- History Section -->
         <section id="historico" class="section">
-            <h2>Histórico de Atividades</h2>
+            <h2><i class="fas fa-history"></i> Histórico de Atividades</h2>
             
             <div class="card">
                 <div class="filter-bar">
                     <div class="filter-group">
-                        <label for="filterDate">Data</label>
+                        <label for="filterDate"><i class="far fa-calendar"></i> Data</label>
                         <input type="date" id="filterDate">
                     </div>
                     <div class="filter-group">
-                        <label for="filterType">Tipo</label>
+                        <label for="filterType"><i class="fas fa-filter"></i> Tipo</label>
                         <select id="filterType">
                             <option value="">Todos</option>
                             <option value="Produção">Produção</option>
@@ -519,7 +907,7 @@
                         </select>
                     </div>
                     <div class="filter-group">
-                        <label for="filterLoss">Perda</label>
+                        <label for="filterLoss"><i class="fas fa-exclamation-triangle"></i> Perda</label>
                         <select id="filterLoss">
                             <option value="">Todos</option>
                             <option value="with">Com Perda</option>
@@ -528,17 +916,19 @@
                     </div>
                     <div class="filter-group">
                         <label>&nbsp;</label>
-                        <button class="btn btn-block" id="applyFilters">Aplicar</button>
+                        <button class="btn btn-block" id="applyFilters">
+                            <i class="fas fa-filter"></i> Aplicar
+                        </button>
                     </div>
                 </div>
             </div>
             
             <div class="card">
                 <div class="tab-bar">
-                    <div class="tab active" data-period="today">Hoje</div>
-                    <div class="tab" data-period="week">Esta Semana</div>
-                    <div class="tab" data-period="month">Este Mês</div>
-                    <div class="tab" data-period="all">Todos</div>
+                    <div class="tab active" data-period="today"><i class="fas fa-calendar-day"></i> Hoje</div>
+                    <div class="tab" data-period="week"><i class="fas fa-calendar-week"></i> Esta Semana</div>
+                    <div class="tab" data-period="month"><i class="fas fa-calendar-alt"></i> Este Mês</div>
+                    <div class="tab" data-period="all"><i class="fas fa-calendar"></i> Todos</div>
                 </div>
                 
                 <ul class="activity-list" id="activityList">
@@ -546,79 +936,118 @@
                 </ul>
                 
                 <div class="empty-state" id="emptyState" style="display: none;">
-                    <div>📭</div>
+                    <div><i class="fas fa-inbox"></i></div>
                     <h3>Nenhuma atividade encontrada</h3>
                     <p>Registre sua primeira atividade no botão abaixo</p>
-                    <a href="#registro" class="btn nav-link">Registrar Atividade</a>
+                    <a href="#registro" class="btn nav-link">
+                        <i class="fas fa-plus-circle btn-registar"></i> Registrar Atividade
+                    </a>
                 </div>
             </div>
             
             <div class="card">
-                <h3>Exportar Dados</h3>
-                <button class="btn btn-block" id="exportCSV">Exportar para CSV</button>
-                <button class="btn btn-block" id="exportPDF">Exportar para PDF</button>
+                <h3><i class="fas fa-file-export"></i> Exportar Dados</h3>
+                <button class="btn btn-block" id="exportCSV">
+                    <i class="fas fa-file-csv"></i> Exportar para CSV
+                </button>
+                <button class="btn btn-block" id="exportPDF">
+                    <i class="fas fa-file-pdf"></i> Exportar para PDF
+                </button>
             </div>
         </section>
 
         <!-- Config Section -->
         <section id="config" class="section">
-            <h2>Configurações</h2>
+            <h2><i class="fas fa-cog"></i> Configurações</h2>
             
             <div class="card">
                 <form id="configForm">
                     <div class="form-group">
-                        <label for="employeeName">Nome do Funcionário</label>
+                        <label for="employeeName"><i class="fas fa-user"></i> Nome do Funcionário</label>
                         <input type="text" id="employeeName" required>
                     </div>
                     
                     <div class="form-group">
-                        <label for="company">Empresa</label>
+                        <label for="company"><i class="fas fa-building"></i> Empresa</label>
                         <input type="text" id="company" required>
                     </div>
                     
                     <div class="form-group">
-                        <label for="department">Setor</label>
+                        <label for="department"><i class="fas fa-sitemap"></i> Setor</label>
                         <input type="text" id="department" required>
                     </div>
                     
                     <div class="form-group">
-                        <label for="position">Função</label>
+                        <label for="position"><i class="fas fa-briefcase"></i> Função</label>
                         <input type="text" id="position" required>
                     </div>
                     
                     <div class="form-group">
-                        <label for="workSchedule">Horário de Trabalho</label>
+                        <label for="workSchedule"><i class="fas fa-clock"></i> Horário de Trabalho</label>
                         <input type="text" id="workSchedule" placeholder="Ex: 08:00 - 17:00" required>
                     </div>
                     
-                    <button type="submit" class="btn btn-success btn-block">Salvar Configurações</button>
+                    <button type="submit" class="btn btn-success btn-block">
+                        <i class="fas fa-save"></i> Salvar Configurações
+                    </button>
                 </form>
             </div>
         </section>
 
         <!-- Backup Section -->
         <section id="backup" class="section">
-            <h2>Backup de Dados</h2>
+            <h2><i class="fas fa-database"></i> Backup de Dados</h2>
             
             <div class="card">
-                <h3>Fazer Backup</h3>
+                <h3><i class="fas fa-save"></i> Fazer Backup</h3>
                 <p>Salve seus dados localmente para evitar perdas de informações.</p>
-                <button class="btn btn-block" id="createBackup">Criar Backup Agora</button>
-                <button class="btn btn-success btn-block" id="downloadBackup">Download do Backup</button>
+                <button class="btn btn-block" id="createBackup">
+                    <i class="fas fa-save"></i> Criar Backup Agora
+                </button>
+                <button class="btn btn-success btn-block" id="downloadBackup">
+                    <i class="fas fa-download"></i> Download do Backup
+                </button>
             </div>
             
             <div class="card">
-                <h3>Restaurar Backup</h3>
+                <h3><i class="fas fa-upload"></i> Restaurar Backup</h3>
                 <p>Importe um backup anterior para restaurar seus dados.</p>
                 <div class="form-group">
-                    <label for="backupFile">Selecione o arquivo de backup</label>
+                    <label for="backupFile"><i class="fas fa-file-import"></i> Selecione o arquivo de backup</label>
                     <input type="file" id="backupFile" accept=".json">
                 </div>
-                <button class="btn btn-warning btn-block" id="restoreBackup">Restaurar Backup</button>
-                <button class="btn btn-danger btn-block" id="clearData">Limpar Todos os Dados</button>
+                <button class="btn btn-warning btn-block" id="restoreBackup">
+                    <i class="fas fa-upload"></i> Restaurar Backup
+                </button>
+                <button class="btn btn-danger btn-block" id="clearData">
+                    <i class="fas fa-trash-alt"></i> Limpar Todos os Dados
+                </button>
             </div>
         </section>
     </main>
+
+    <!-- Toast Notification -->
+    <div class="toast" id="toast" style="display: none;">
+        <i class="fas fa-check-circle"></i>
+        <span id="toastMessage">Operação realizada com sucesso!</span>
+    </div>
+
+    <!-- Confirmation Modal -->
+    <div class="modal" id="confirmationModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title" id="modalTitle">Confirmação</h3>
+                <button class="close-modal" id="closeModal">&times;</button>
+            </div>
+            <div class="modal-body" id="modalBody">
+                Tem certeza que deseja realizar esta ação?
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" id="cancelAction">Cancelar</button>
+                <button class="btn btn-danger" id="confirmAction">Confirmar</button>
+            </div>
+        </div>
+    </div>
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -639,10 +1068,23 @@
             
             // DOM elements
             const navToggle = document.getElementById('navToggle');
-            const mainNav = document.getElementById('mainNav');
+            const sidebar = document.getElementById('sidebar');
+            const closeSidebar = document.getElementById('closeSidebar');
+            const overlay = document.getElementById('overlay');
             const navLinks = document.querySelectorAll('.nav-link');
             const sections = document.querySelectorAll('.section');
             const tabs = document.querySelectorAll('.tab');
+            const userAvatar = document.getElementById('userAvatar');
+            const sidebarLogo = document.getElementById('sidebarLogo');
+            const mainLogo = document.getElementById('mainLogo');
+            const toast = document.getElementById('toast');
+            const toastMessage = document.getElementById('toastMessage');
+            const confirmationModal = document.getElementById('confirmationModal');
+            const closeModal = document.getElementById('closeModal');
+            const cancelAction = document.getElementById('cancelAction');
+            const confirmAction = document.getElementById('confirmAction');
+            const modalTitle = document.getElementById('modalTitle');
+            const modalBody = document.getElementById('modalBody');
             
             // Form elements
             const activityForm = document.getElementById('activityForm');
@@ -705,9 +1147,16 @@
             // Set up all event listeners
             function setupEventListeners() {
                 // Navigation
-                navToggle.addEventListener('click', toggleNav);
+                navToggle.addEventListener('click', toggleSidebar);
+                closeSidebar.addEventListener('click', toggleSidebar);
+                overlay.addEventListener('click', toggleSidebar);
+                
                 navLinks.forEach(link => {
-                    link.addEventListener('click', switchSection);
+                    link.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        switchSection.call(this);
+                        toggleSidebar();
+                    });
                 });
                 
                 // Tabs
@@ -736,34 +1185,61 @@
                 // Backup
                 createBackup.addEventListener('click', createDataBackup);
                 downloadBackup.addEventListener('click', downloadDataBackup);
-                restoreBackup.addEventListener('click', restoreDataBackup);
-                clearData.addEventListener('click', clearAllData);
+                restoreBackup.addEventListener('click', function() {
+                    showConfirmation(
+                        'Restaurar Backup', 
+                        'Isso substituirá todos os dados atuais. Tem certeza?',
+                        restoreDataBackup
+                    );
+                });
+                clearData.addEventListener('click', function() {
+                    showConfirmation(
+                        'Limpar Todos os Dados', 
+                        'Isso apagará TODOS os dados permanentemente. Tem certeza?',
+                        clearAllData
+                    );
+                });
                 
                 // Export
                 exportCSV.addEventListener('click', exportToCSV);
                 exportPDF.addEventListener('click', exportToPDF);
+                
+                // Modal
+                closeModal.addEventListener('click', hideModal);
+                cancelAction.addEventListener('click', hideModal);
+                confirmAction.addEventListener('click', function() {
+                    if (confirmAction.onConfirm) {
+                        confirmAction.onConfirm();
+                    }
+                    hideModal();
+                });
             }
             
-            // Toggle mobile navigation
-            function toggleNav() {
-                mainNav.classList.toggle('active');
+            // Toggle sidebar
+            function toggleSidebar() {
+                sidebar.classList.toggle('active');
+                overlay.classList.toggle('active');
+                document.body.classList.toggle('sidebar-open');
             }
             
             // Switch between sections
             function switchSection(e) {
-                e.preventDefault();
-                
                 // Hide all sections
                 sections.forEach(section => {
                     section.classList.remove('active');
+                });
+                
+                // Remove active class from all nav links
+                navLinks.forEach(link => {
+                    link.classList.remove('active');
                 });
                 
                 // Show selected section
                 const sectionId = this.getAttribute('href');
                 document.querySelector(sectionId).classList.add('active');
                 
-                // Close mobile nav if open
-                mainNav.classList.remove('active');
+                // Add active class to clicked nav link
+                this.classList.add('active');
                 
                 // Update dashboard if needed
                 if (sectionId === '#dashboard') {
@@ -772,6 +1248,52 @@
                 
                 // Scroll to top
                 window.scrollTo(0, 0);
+            }
+            
+            // Show toast notification
+            function showToast(message, type = 'success') {
+                toastMessage.textContent = message;
+                
+                // Set color based on type
+               switch(type) {
+    case 'success':
+        toast.style.backgroundColor = getComputedStyle(document.documentElement).getPropertyValue('--success-color');
+        toast.querySelector('i').className = 'fas fa-check-circle';
+        break;
+    case 'error':
+        toast.style.backgroundColor = getComputedStyle(document.documentElement).getPropertyValue('--danger-color');
+        toast.querySelector('i').className = 'fas fa-exclamation-circle';
+        break;
+    case 'warning':
+        toast.style.backgroundColor = getComputedStyle(document.documentElement).getPropertyValue('--warning-color');
+        toast.querySelector('i').className = 'fas fa-exclamation-triangle';
+        break;
+    default:
+        toast.style.backgroundColor = getComputedStyle(document.documentElement).getPropertyValue('--primary-color');
+        toast.querySelector('i').className = 'fas fa-info-circle';
+}
+                
+                toast.style.display = 'flex';
+                setTimeout(() => {
+                    toast.classList.add('hide');
+                    setTimeout(() => {
+                        toast.style.display = 'none';
+                        toast.classList.remove('hide');
+                    }, 300);
+                }, 3000);
+            }
+            
+            // Show confirmation modal
+            function showConfirmation(title, message, callback) {
+                modalTitle.textContent = title;
+                modalBody.textContent = message;
+                confirmAction.onConfirm = callback;
+                confirmationModal.classList.add('active');
+            }
+            
+            // Hide modal
+            function hideModal() {
+                confirmationModal.classList.remove('active');
             }
             
             // Load configuration
@@ -784,7 +1306,10 @@
                 
                 // Update header if name is set
                 if (config.employeeName) {
-                    document.querySelector('.logo').textContent = `Diário de ${config.employeeName}`;
+                    const initials = config.employeeName.split(' ').map(n => n[0]).join('').toUpperCase();
+                    userAvatar.textContent = initials;
+                    sidebarLogo.textContent = `Diário de ${config.employeeName}`;
+                    mainLogo.textContent = `Diário de ${config.employeeName.split(' ')[0]}`;
                 }
             }
             
@@ -801,10 +1326,10 @@
                 };
                 
                 localStorage.setItem('diaryConfig', JSON.stringify(config));
-                alert('Configurações salvas com sucesso!');
+                showToast('Configurações salvas com sucesso!');
                 
-                // Update header
-                document.querySelector('.logo').textContent = `Diário de ${config.employeeName}`;
+                // Update UI
+                loadConfig();
             }
             
             // Save activity
@@ -855,11 +1380,17 @@
                 document.querySelector('#dashboard').classList.add('active');
                 document.querySelector('#registro').classList.remove('active');
                 
+                // Update nav links
+                navLinks.forEach(link => {
+                    link.classList.remove('active');
+                });
+                document.querySelector('a[href="#dashboard"]').classList.add('active');
+                
                 // Scroll to top
                 window.scrollTo(0, 0);
                 
                 // Show success message
-                alert('Atividade registrada com sucesso!');
+                showToast('Atividade registrada com sucesso!');
             }
             
             // Handle photo upload
@@ -1006,12 +1537,12 @@
                     activityItem.innerHTML = `
                         <h3>${activity.type}</h3>
                         <div class="activity-meta">
-                            <span>${formattedDate}</span>
-                            <span>Produção: ${activity.productionQty}</span>
+                            <span><i class="far fa-calendar-alt"></i> ${formattedDate}</span>
+                            <span><i class="fas fa-box-open"></i> ${activity.productionQty}</span>
                         </div>
                         <div class="activity-details">
                             ${lossHTML}
-                            <p><strong>Observações:</strong> ${activity.notes || 'Nenhuma'}</p>
+                            <p><strong><i class="far fa-comment-alt"></i> Observações:</strong> ${activity.notes || 'Nenhuma'}</p>
                         </div>
                         ${photosHTML}
                     `;
@@ -1036,8 +1567,8 @@
                 }).length;
                 
                 // Update UI
-                totalProduction.textContent = totalProd;
-                totalLosses.textContent = totalLoss;
+                totalProduction.textContent = totalProd.toLocaleString();
+                totalLosses.textContent = totalLoss.toLocaleString();
                 efficiency.textContent = `${eff}%`;
                 activitiesToday.textContent = todayActivities;
                 
@@ -1153,6 +1684,10 @@
                             y: {
                                 beginAtZero: true
                             }
+                        },
+                        animation: {
+                            duration: 1000,
+                            easing: 'easeOutQuart'
                         }
                     }
                 });
@@ -1168,7 +1703,7 @@
                 };
                 
                 localStorage.setItem('lastBackup', JSON.stringify(backup));
-                alert('Backup criado com sucesso!');
+                showToast('Backup criado com sucesso!');
             }
             
             // Download data backup
@@ -1187,12 +1722,14 @@
                 document.body.appendChild(downloadAnchor);
                 downloadAnchor.click();
                 document.body.removeChild(downloadAnchor);
+                
+                showToast('Download do backup iniciado!');
             }
             
             // Restore data backup
             function restoreDataBackup() {
                 if (!backupFile.files.length) {
-                    alert('Por favor, selecione um arquivo de backup primeiro.');
+                    showToast('Por favor, selecione um arquivo de backup primeiro.', 'error');
                     return;
                 }
                 
@@ -1207,24 +1744,22 @@
                             throw new Error('Formato de backup inválido');
                         }
                         
-                        if (confirm('Isso substituirá todos os dados atuais. Tem certeza?')) {
-                            activities = backup.activities;
-                            photos = backup.photos || {};
-                            config = backup.config;
-                            
-                            localStorage.setItem('activities', JSON.stringify(activities));
-                            localStorage.setItem('activityPhotos', JSON.stringify(photos));
-                            localStorage.setItem('diaryConfig', JSON.stringify(config));
-                            
-                            // Update UI
-                            loadConfig();
-                            updateDashboard();
-                            loadActivities('today');
-                            
-                            alert('Backup restaurado com sucesso!');
-                        }
+                        activities = backup.activities;
+                        photos = backup.photos || {};
+                        config = backup.config;
+                        
+                        localStorage.setItem('activities', JSON.stringify(activities));
+                        localStorage.setItem('activityPhotos', JSON.stringify(photos));
+                        localStorage.setItem('diaryConfig', JSON.stringify(config));
+                        
+                        // Update UI
+                        loadConfig();
+                        updateDashboard();
+                        loadActivities('today');
+                        
+                        showToast('Backup restaurado com sucesso!');
                     } catch (e) {
-                        alert('Erro ao restaurar backup: ' + e.message);
+                        showToast('Erro ao restaurar backup: ' + e.message, 'error');
                     }
                 };
                 
@@ -1233,28 +1768,26 @@
             
             // Clear all data
             function clearAllData() {
-                if (confirm('Isso apagará TODOS os dados permanentemente. Tem certeza?')) {
-                    activities = [];
-                    photos = {};
-                    config = {
-                        employeeName: '',
-                        company: '',
-                        department: '',
-                        position: '',
-                        workSchedule: ''
-                    };
-                    
-                    localStorage.removeItem('activities');
-                    localStorage.removeItem('activityPhotos');
-                    localStorage.removeItem('diaryConfig');
-                    
-                    // Update UI
-                    loadConfig();
-                    updateDashboard();
-                    loadActivities('today');
-                    
-                    alert('Todos os dados foram apagados.');
-                }
+                activities = [];
+                photos = {};
+                config = {
+                    employeeName: '',
+                    company: '',
+                    department: '',
+                    position: '',
+                    workSchedule: ''
+                };
+                
+                localStorage.removeItem('activities');
+                localStorage.removeItem('activityPhotos');
+                localStorage.removeItem('diaryConfig');
+                
+                // Update UI
+                loadConfig();
+                updateDashboard();
+                loadActivities('today');
+                
+                showToast('Todos os dados foram apagados.');
             }
             
             // Export to CSV
@@ -1277,6 +1810,8 @@
                 document.body.appendChild(downloadAnchor);
                 downloadAnchor.click();
                 document.body.removeChild(downloadAnchor);
+                
+                showToast('Exportação para CSV iniciada!');
             }
             
             // Export to PDF
@@ -1349,6 +1884,8 @@
                 
                 // Save the PDF
                 doc.save(`diario_bordo_${new Date().toISOString().slice(0, 10)}.pdf`);
+                
+                showToast('Exportação para PDF iniciada!');
             }
             
             // Initialize the app
