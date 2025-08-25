@@ -1,124 +1,69 @@
-<!-- ARQUIVO PRINCIPAL -->
+<!-- CÓPIA 03 -->
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Registro de Atividades - Sistema de Evidências</title>
-    
-    <!-- Bibliotecas externas via CDN -->
-    <script src="https://cdn.jsdelivr.net/npm/dexie@3.2.1/dist/dexie.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
-    
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Work Manager Profissional</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
     <style>
         :root {
             --primary-color: #3498db;
+            --primary-light: #5dade2;
+            --primary-dark: #2980b9;
             --secondary-color: #2c3e50;
-            --success-color: #27ae60;
+            --success-color: #2ecc71;
+            --success-dark: #27ae60;
             --danger-color: #e74c3c;
+            --danger-dark: #c0392b;
             --warning-color: #f39c12;
+            --warning-dark: #d35400;
             --light-color: #ecf0f1;
-            --dark-color: #2c3e50;
-            --text-color: #333;
-            --bg-color: #f8f9fa;
-            --sidebar-width: 250px;
+            --dark-color: #34495e;
+            --gray-light: #bdc3c7;
+            --gray-dark: #7f8c8d;
+            --background-color: #f5f7fa;
+            --sidebar-width: 280px;
             --header-height: 60px;
-            --container-padding: 16px;
-        }
-
-        .dark-mode {
-            --text-color: #ecf0f1;
-            --bg-color: #2c3e50;
-            --light-color: #34495e;
-            --dark-color: #ecf0f1;
+            --transition-speed: 0.3s;
+            --shadow-sm: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+            --shadow-md: 0 4px 6px rgba(0,0,0,0.1), 0 1px 3px rgba(0,0,0,0.08);
+            --shadow-lg: 0 10px 20px rgba(0,0,0,0.1), 0 6px 6px rgba(0,0,0,0.1);
         }
 
         * {
+            box-sizing: border-box;
             margin: 0;
             padding: 0;
-            box-sizing: border-box;
-            transition: background-color 0.3s, color 0.3s;
+            font-family: 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
         }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            color: var(--text-color);
-            background-color: var(--bg-color);
+            background-color: var(--background-color);
+            color: #333;
             line-height: 1.6;
+            font-size: 16px;
             overflow-x: hidden;
+            transition: padding-left var(--transition-speed) ease;
         }
 
-        /* Layout principal */
-        .app-container {
-            display: flex;
-            flex-direction: column;
-            min-height: 100vh;
-            width: 100%;
-        }
-
-        /* Header */
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 12px var(--container-padding);
-            background-color: var(--light-color);
-            border-bottom: 1px solid #ddd;
-            position: sticky;
-            top: 0;
-            z-index: 100;
-            height: var(--header-height);
-        }
-
-        .hamburger {
-            background: none;
-            border: none;
-            font-size: 1.5rem;
-            cursor: pointer;
-            color: var(--text-color);
-            padding: 8px;
-        }
-
-        .app-title {
-            font-size: 1.2rem;
-            font-weight: bold;
-            text-align: center;
-            flex: 1;
-        }
-
-        .status-indicator {
-            display: inline-block;
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
-            margin-right: 5px;
-        }
-
-        .status-online {
-            background-color: var(--success-color);
-        }
-
-        .status-offline {
-            background-color: var(--danger-color);
-        }
-
-        /* Sidebar */
+        /* Sidebar Styles */
         .sidebar {
-            width: var(--sidebar-width);
-            background-color: var(--secondary-color);
-            color: white;
             position: fixed;
-            height: 100vh;
-            overflow-y: auto;
-            transform: translateX(-100%);
-            transition: transform 0.3s ease;
-            z-index: 1000;
             top: 0;
             left: 0;
+            width: var(--sidebar-width);
+            height: 100vh;
+            background-color: var(--secondary-color);
+            color: white;
+            transform: translateX(-100%);
+            transition: transform var(--transition-speed) ease;
+            z-index: 1000;
+            box-shadow: var(--shadow-lg);
+            display: flex;
+            flex-direction: column;
         }
 
         .sidebar.active {
@@ -126,1836 +71,2066 @@
         }
 
         .sidebar-header {
-            padding: 1rem;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            background-color: rgba(0,0,0,0.1);
             display: flex;
             justify-content: space-between;
             align-items: center;
-            height: var(--header-height);
+        }
+
+        .sidebar-logo {
+            font-size: 1.3rem;
+            font-weight: bold;
+            color: white;
+        }
+
+        .close-sidebar {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.5rem;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+        }
+
+        .close-sidebar:hover {
+            transform: rotate(90deg);
         }
 
         .sidebar-menu {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px 0;
+        }
+
+        .sidebar-menu ul {
             list-style: none;
-            padding: 0.5rem 0;
         }
 
         .sidebar-menu li {
-            padding: 0;
+            margin-bottom: 5px;
         }
 
         .sidebar-menu a {
-            color: white;
+            display: flex;
+            align-items: center;
+            padding: 12px 20px;
+            color: rgba(255,255,255,0.8);
             text-decoration: none;
-            display: block;
-            padding: 1rem;
-            border-radius: 0;
-            transition: background-color 0.3s;
-            font-size: 1rem;
+            transition: all 0.2s ease;
         }
 
         .sidebar-menu a:hover, .sidebar-menu a.active {
-            background-color: rgba(255, 255, 255, 0.1);
+            background-color: rgba(0,0,0,0.2);
+            color: white;
         }
 
         .sidebar-menu i {
-            margin-right: 0.5rem;
-            width: 24px;
+            margin-right: 10px;
+            width: 20px;
             text-align: center;
         }
 
-        /* Overlay para fechar o menu */
+        .sidebar-footer {
+            padding: 15px;
+            text-align: center;
+            font-size: 0.8rem;
+            color: rgba(255,255,255,0.6);
+            border-top: 1px solid rgba(255,255,255,0.1);
+        }
+
+        /* Overlay for sidebar */
         .overlay {
             position: fixed;
             top: 0;
             left: 0;
-            right: 0;
-            bottom: 0;
-            background-color: rgba(0, 0, 0, 0.5);
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
             z-index: 999;
-            display: none;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity var(--transition-speed) ease, visibility var(--transition-speed) ease;
         }
 
         .overlay.active {
-            display: block;
+            opacity: 1;
+            visibility: visible;
         }
 
-        /* Conteúdo principal */
-        .main-content {
-            flex: 1;
-            padding: var(--container-padding);
-            width: 100%;
-            max-width: 100%;
-            overflow-x: hidden;
-        }
-
-        /* Seções de conteúdo */
-        .content-section {
-            width: 100%;
-            max-width: 100%;
-            overflow: hidden;
-        }
-
-        /* Formulário */
-        .form-container {
-            width: 100%;
-            margin: 0 auto;
+        /* Header Styles */
+        header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: var(--header-height);
             background-color: white;
-            padding: 1rem;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-            overflow: hidden;
+            box-shadow: var(--shadow-sm);
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            padding: 0 20px;
+            transition: left var(--transition-speed) ease;
         }
 
-        .form-title {
+        .header-content {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 1.3rem;
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+
+        .nav-toggle {
+            background: none;
+            border: none;
+            color: var(--dark-color);
             font-size: 1.5rem;
-            margin-bottom: 1rem;
-            color: var(--secondary-color);
-            padding: 0 8px;
+            cursor: pointer;
+            transition: transform 0.2s ease;
         }
 
-        .form-group {
-            margin-bottom: 1rem;
-            width: 100%;
+        .nav-toggle:hover {
+            transform: scale(1.1);
         }
 
-        .form-label {
-            display: block;
-            margin-bottom: 0.5rem;
-            font-weight: 500;
-            width: 100%;
+        .user-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background-color: var(--primary-color);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            cursor: pointer;
         }
 
-        .form-input, .form-select, .form-textarea {
-            width: 100%;
-            padding: 12px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            font-size: 1rem;
+        /* Main Content Styles */
+        main {
+            margin-top: var(--header-height);
+            padding: 20px;
+            transition: padding-left var(--transition-speed) ease;
+        }
+
+        .container {
             max-width: 100%;
+            margin: 20px 0 0 0 ;
         }
 
-        .form-textarea {
-            min-height: 100px;
+        /* Section Styles */
+        .section {
+            padding: 20px 0;
+            display: none;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .section.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Card Styles */
+        .card {
+            background: white;
+            border-radius: 10px;
+            box-shadow: var(--shadow-sm);
+            padding: 20px;
+            margin-bottom: 20px;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+
+        h2 {
+            color: var(--dark-color);
+            margin-bottom: 20px;
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+
+        h3 {
+            color: var(--dark-color);
+            margin-bottom: 15px;
+            font-size: 1.2rem;
+            font-weight: 500;
+        }
+
+        /* Form Styles */
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: var(--dark-color);
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 16px;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+            outline: none;
+        }
+
+        textarea {
+            min-height: 120px;
             resize: vertical;
         }
 
+        /* Button Styles */
         .btn {
-            padding: 12px 16px;
-            border: none;
-            border-radius: 4px;
-            font-size: 1rem;
-            cursor: pointer;
-            transition: background-color 0.3s;
-            margin: 4px;
-            width: auto;
-        }
-
-        .btn-primary {
+            display: inline-block;
             background-color: var(--primary-color);
             color: white;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 500;
+            text-align: center;
+            text-decoration: none;
+            transition: all 0.2s ease;
+            box-shadow: var(--shadow-sm);
+            margin: 8px;
         }
 
-        .btn-primary:hover {
-            background-color: #2980b9;
+        .btn:hover {
+            background-color: var(--primary-dark);
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-md);
         }
 
-        .btn-danger {
-            background-color: var(--danger-color);
-            color: white;
+        .btn:active {
+            transform: translateY(0);
+            box-shadow: var(--shadow-sm);
         }
 
-        .btn-danger:hover {
-            background-color: #c0392b;
+        .btn-block {
+            display: block;
+            width: 100%;
         }
 
         .btn-success {
             background-color: var(--success-color);
-            color: white;
         }
 
         .btn-success:hover {
-            background-color: #219a52;
+            background-color: var(--success-dark);
         }
 
-        /* Câmera e upload de fotos */
-        .photo-section {
-            margin-top: 1.5rem;
-            width: 100%;
+        .btn-danger {
+            background-color: var(--danger-color);
         }
 
-        .camera-container {
-            width: 100%;
-            margin-bottom: 1rem;
-            display: flex;
-            flex-direction: column;
+        .btn-danger:hover {
+            background-color: var(--danger-dark);
         }
 
-        #videoElement {
-            width: 100%;
-            max-width: 100%;
-            background-color: #ddd;
-            border-radius: 4px;
-            aspect-ratio: 4/3;
+        .btn-warning {
+            background-color: var(--warning-color);
         }
 
+        .btn-warning:hover {
+            background-color: var(--warning-dark);
+        }
+
+        .btn-outline {
+            background-color: transparent;
+            border: 1px solid var(--primary-color);
+            color: var(--primary-color);
+        }
+
+        .btn-outline:hover {
+            background-color: rgba(52, 152, 219, 0.1);
+        }
+
+        /* Photo Preview Styles */
         .photo-preview {
             display: flex;
             flex-wrap: wrap;
             gap: 10px;
-            margin-top: 1rem;
-            width: 100%;
-            justify-content: center;
+            margin-top: 15px;
         }
 
         .photo-thumbnail {
-            position: relative;
-            width: 100px;
-            height: 100px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            overflow: hidden;
-        }
-
-        .photo-thumbnail img {
-            width: 100%;
-            height: 100%;
+            width: 80px;
+            height: 80px;
             object-fit: cover;
-        }
-
-        .remove-photo {
-            position: absolute;
-            top: 5px;
-            right: 5px;
-            background-color: rgba(255, 255, 255, 0.8);
-            border: none;
-            border-radius: 50%;
-            width: 24px;
-            height: 24px;
+            border-radius: 6px;
+            border: 1px solid #ddd;
+            transition: transform 0.2s ease;
             cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
         }
 
-        /* Dashboard */
-        .kpi-cards {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-            gap: 12px;
-            margin-bottom: 1.5rem;
-            width: 100%;
+        .photo-thumbnail:hover {
+            transform: scale(1.05);
         }
 
-        .kpi-card {
-            background-color: white;
-            padding: 1rem;
+        /* Activity List Styles */
+        .activity-list {
+            list-style: none;
+        }
+
+        .activity-item {
+            background: white;
             border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-            text-align: center;
-            min-width: 0;
+            box-shadow: var(--shadow-sm);
+            padding: 15px;
+            margin-bottom: 15px;
+            border-left: 4px solid var(--primary-color);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
         }
 
-        .kpi-value {
-            font-size: 1.5rem;
+        .activity-item:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .activity-item h3 {
+            color: var(--dark-color);
+            margin-bottom: 10px;
+            font-size: 1.1rem;
+        }
+
+        .activity-meta {
+            display: flex;
+            justify-content: space-between;
+            color: var(--gray-dark);
+            font-size: 0.9rem;
+            margin-bottom: 10px;
+        }
+
+        .activity-details {
+            margin-bottom: 10px;
+        }
+
+        .activity-details p {
+            margin-bottom: 8px;
+            color: #555;
+        }
+
+        .activity-photos {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        /* Stats Grid Styles */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            box-shadow: var(--shadow-sm);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-3px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .stat-value {
+            font-size: 1.8rem;
             font-weight: bold;
             color: var(--primary-color);
-            overflow: hidden;
-            text-overflow: ellipsis;
+            margin: 10px 0;
         }
 
-        .kpi-label {
-            font-size: 0.8rem;
-            color: #666;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        .chart-container {
-            background-color: white;
-            padding: 1rem;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-            margin-bottom: 1.5rem;
-            width: 100%;
-            overflow: hidden;
-            position: relative;
-        }
-
-        .chart-container canvas {
-            max-width: 100%;
-            height: auto !important;
-        }
-
-        /* Tabela de atividades */
-        .activities-table-container {
-            overflow-x: auto;
-            width: 100%;
-            -webkit-overflow-scrolling: touch;
-        }
-
-        .activities-table {
-            width: 100%;
-            border-collapse: collapse;
-            background-color: white;
-            border-radius: 8px;
-            overflow: hidden;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-            min-width: 600px;
-        }
-
-        .activities-table th, .activities-table td {
-            padding: 0.75rem;
-            text-align: left;
-            border-bottom: 1px solid #ddd;
+        .stat-label {
+            color: var(--gray-dark);
             font-size: 0.9rem;
         }
 
-        .activities-table th {
-            background-color: var(--light-color);
-            font-weight: 600;
+        /* Chart Styles */
+        .chart-container {
+            height: 250px;
+            margin-bottom: 20px;
+            position: relative;
+        }
+
+        /* Incident List Styles */
+        .incident-list {
+            list-style: none;
+        }
+
+        .incident-item {
+            padding: 12px 0;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: background-color 0.2s ease;
+        }
+
+        .incident-item:hover {
+            background-color: rgba(0,0,0,0.02);
+        }
+
+        .incident-type {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            background-color: var(--danger-color);
+            color: white;
+        }
+
+        .incident-date {
+            color: var(--gray-dark);
+            font-size: 0.8rem;
+        }
+
+        /* Filter Bar Styles */
+        .filter-bar {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .filter-group {
+            flex: 1;
+            min-width: 120px;
+        }
+
+        /* Empty State Styles */
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--gray-dark);
+        }
+
+        .empty-state i {
+            font-size: 3rem;
+            color: var(--gray-light);
+            margin-bottom: 15px;
+            opacity: 0.6;
+        }
+
+        .empty-state h3 {
+            margin-bottom: 10px;
+            color: var(--dark-color);
+        }
+
+        .empty-state p {
+            margin-bottom: 20px;
+        }
+
+        /* Tab Bar Styles */
+        .tab-bar {
+            display: flex;
+            border-bottom: 1px solid #ddd;
+            margin-bottom: 20px;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .tab {
+            padding: 12px 16px;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
             white-space: nowrap;
+            transition: all 0.2s ease;
         }
 
-        .activities-table tr:hover {
-            background-color: rgba(0, 0, 0, 0.03);
+        .tab:hover {
+            color: var(--primary-color);
         }
 
-        /* Modal */
+        .tab.active {
+            border-bottom: 3px solid var(--primary-color);
+            color: var(--primary-color);
+            font-weight: 500;
+        }
+
+        /* Data Table Styles */
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+
+        .data-table th, .data-table td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .data-table th {
+            background-color: #f8f9fa;
+            font-weight: 600;
+            color: var(--dark-color);
+        }
+
+        .data-table tr:hover {
+            background-color: #f8f9fa;
+        }
+
+        .table-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .table-action-btn {
+            padding: 6px 10px;
+            border-radius: 4px;
+            font-size: 0.85rem;
+            cursor: pointer;
+        }
+
+        /* Modal Styles */
         .modal {
-            display: none;
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background-color: rgba(0, 0, 0, 0.5);
-            z-index: 2000;
-            align-items: center;
+            background-color: rgba(0,0,0,0.5);
+            display: flex;
             justify-content: center;
-            padding: 16px;
+            align-items: center;
+            z-index: 1100;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
         }
 
         .modal.active {
-            display: flex;
+            opacity: 1;
+            visibility: visible;
         }
 
         .modal-content {
             background-color: white;
-            padding: 1rem;
-            border-radius: 8px;
-            width: 100%;
-            max-width: 100%;
-            max-height: 80vh;
+            border-radius: 10px;
+            width: 90%;
+            max-width: 800px;
+            max-height: 90vh;
             overflow-y: auto;
+            transform: translateY(20px);
+            transition: transform 0.3s ease;
+            box-shadow: var(--shadow-lg);
+        }
+
+        .modal.active .modal-content {
+            transform: translateY(0);
         }
 
         .modal-header {
+            padding: 15px 20px;
+            border-bottom: 1px solid #eee;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 1rem;
         }
 
-        .modal-close {
+        .modal-title {
+            font-size: 1.2rem;
+            font-weight: 500;
+            color: var(--dark-color);
+        }
+
+        .close-modal {
             background: none;
             border: none;
             font-size: 1.5rem;
             cursor: pointer;
+            color: var(--gray-dark);
         }
 
-        /* Filtros */
-        .filters-container {
+        .modal-body {
+            padding: 20px;
+        }
+
+        .modal-footer {
+            padding: 15px 20px;
+            border-top: 1px solid #eee;
             display: flex;
-            flex-direction: column;
-            gap: 12px;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+
+        /* Photo Gallery Styles */
+        .photo-gallery {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .gallery-item {
+            position: relative;
+            border-radius: 8px;
+            overflow: hidden;
+            cursor: pointer;
+        }
+
+        .gallery-item img {
             width: 100%;
+            height: 120px;
+            object-fit: cover;
+            transition: transform 0.3s ease;
         }
 
-        .date-filters {
-            display: flex;
-            gap: 8px;
-            flex-wrap: wrap;
+        .gallery-item:hover img {
+            transform: scale(1.05);
         }
 
-        .date-filters input {
-            flex: 1;
-            min-width: 120px;
-        }
-
-        /* Botões em grupo */
-        .button-group {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-            margin: 12px 0;
-        }
-
-        /* Responsividade */
+        /* Responsive Styles */
         @media (min-width: 768px) {
-            :root {
-                --container-padding: 20px;
+            body {
+                padding-left: 0;
             }
-            
-            .app-container {
-                flex-direction: row;
-            }
-            
+
             .sidebar {
+                transform: translateX(-100%);
+            }
+
+            .sidebar.active {
                 transform: translateX(0);
-                position: relative;
-                height: 100vh;
             }
-            
-            .main-content {
-                margin-left: 0;
-                flex: 1;
-                overflow-y: auto;
+
+            .overlay.active {
+                opacity: 1;
+                visibility: visible;
             }
-            
-            .hamburger {
-                display: none;
-            }
-            
-            .overlay {
-                display: none !important;
-            }
-            
-            .app-title {
-                font-size: 1.5rem;
-                text-align: left;
-                padding-left: 16px;
-            }
-            
-            .kpi-cards {
+
+            .stats-grid {
                 grid-template-columns: repeat(4, 1fr);
             }
-            
-            .form-container {
-                padding: 1.5rem;
+
+            .filter-bar {
+                grid-template-columns: repeat(4, 1fr);
             }
         }
 
-        @media (max-width: 767px) {
-            .main-content.sidebar-open {
-                margin-left: 0;
-                transform: translateX(var(--sidebar-width));
+        @media (min-width: 992px) {
+            body {
+                padding-left: var(--sidebar-width);
             }
-            
+
+            header {
+                left: var(--sidebar-width);
+            }
+
             .sidebar {
-                width: 80%;
-                max-width: 300px;
+                transform: translateX(0);
             }
-            
-            .button-group {
-                justify-content: center;
+
+            .nav-toggle {
+                display: none;
             }
-            
-            .button-group .btn {
-                flex: 1;
-                min-width: 120px;
+
+            .overlay {
+                display: none;
             }
-            
-            .date-filters {
-                flex-direction: column;
+
+            .container {
+                max-width: 1200px;
             }
         }
 
-        /* Utilitários */
-        .hidden {
-            display: none !important;
+        /* Animation for toast messages */
+        @keyframes slideIn {
+            from { transform: translateY(20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
         }
 
-        .text-center {
-            text-align: center;
+        @keyframes slideOut {
+            from { transform: translateY(0); opacity: 1; }
+            to { transform: translateY(20px); opacity: 0; }
         }
 
-        .mt-1 {
-            margin-top: 0.5rem;
+        /* Toast notification */
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background-color: var(--success-color);
+            color: white;
+            padding: 12px 20px;
+            border-radius: 6px;
+            box-shadow: var(--shadow-lg);
+            z-index: 1100;
+            display: flex;
+            align-items: center;
+            animation: slideIn 0.3s ease forwards;
         }
 
-        .mt-2 {
-            margin-top: 1rem;
+        .toast.hide {
+            animation: slideOut 0.3s ease forwards;
         }
 
-        .mt-3 {
-            margin-top: 1.5rem;
+        .toast i {
+            margin-right: 10px;
         }
 
-        .mb-1 {
-            margin-bottom: 0.5rem;
+        /* Report Filter Styles */
+        .report-filters {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 20px;
         }
 
-        .mb-2 {
-            margin-bottom: 1rem;
+        /* View Activity Modal Styles */
+        .activity-detail {
+            margin-bottom: 15px;
         }
 
-        .mb-3 {
-            margin-bottom: 1.5rem;
+        .activity-detail-label {
+            font-weight: 600;
+            color: var(--dark-color);
+            margin-bottom: 5px;
         }
 
-        /* Dark mode */
-        body.dark-mode {
-            background-color: var(--bg-color);
-            color: var(--text-color);
+        .activity-detail-value {
+            color: #555;
         }
 
-        body.dark-mode .form-container,
-        body.dark-mode .kpi-card,
-        body.dark-mode .chart-container,
-        body.dark-mode .activities-table,
-        body.dark-mode .modal-content {
-            background-color: var(--light-color);
-            color: var(--text-color);
+        /* Photo Capture Styles */
+        .photo-capture-options {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
         }
 
-        body.dark-mode .form-input,
-        body.dark-mode .form-select,
-        body.dark-mode .form-textarea {
-            background-color: #3a3f44;
-            border-color: #4a4f54;
-            color: var(--text-color);
+        .camera-preview {
+            width: 100%;
+            max-height: 300px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            display: none;
         }
 
-        body.dark-mode .activities-table th {
-            background-color: #3a3f44;
-            color: var(--text-color);
-        }
-
-        body.dark-mode .activities-table tr:hover {
-            background-color: rgba(255, 255, 255, 0.05);
+        .camera-controls {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-bottom: 15px;
         }
     </style>
 </head>
 <body>
-    <div class="app-container">
-        <!-- Sidebar -->
-        <div class="sidebar" id="sidebar">
-            <div class="sidebar-header">
-                <h2>Menu</h2>
-                <button class="hamburger" id="closeSidebar">✕</button>
-            </div>
-            <ul class="sidebar-menu">
-                <li><a href="#" class="active" data-section="dashboard"><i>📊</i> Dashboard</a></li>
-                <li><a href="#" data-section="register"><i>➕</i> Nova Atividade</a></li>
-                <li><a href="#" data-section="activities"><i>📋</i> Lista de Atividades</a></li>
-                <li><a href="#" data-section="reports"><i>📄</i> Relatórios</a></li>
-                <li><a href="#" data-section="backup"><i>💾</i> Backup/Restore</a></li>
-                <li><a href="#" data-section="settings"><i>⚙️</i> Configurações</a></li>
+    <!-- Sidebar Navigation -->
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <div class="sidebar-logo" id="sidebarLogo">Work Manager</div>
+            <button class="close-sidebar" id="closeSidebar">&times;</button>
+        </div>
+        <div class="sidebar-menu">
+            <ul>
+                <li><a href="#dashboard" class="nav-link active"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
+                <li><a href="#registro" class="nav-link"><i class="fas fa-plus-circle"></i> Registrar Atividade</a></li>
+                <li><a href="#atividades" class="nav-link"><i class="fas fa-list"></i> Atividades</a></li>
+                <li><a href="#relatorios" class="nav-link"><i class="fas fa-chart-bar"></i> Relatórios</a></li>
+                <li><a href="#config" class="nav-link"><i class="fas fa-cog"></i> Configurações</a></li>
+                <li><a href="#backup" class="nav-link"><i class="fas fa-database"></i> Backup</a></li>
             </ul>
         </div>
+        <div class="sidebar-footer">
+            Work Manager Profissional &copy; 2023
+        </div>
+    </div>
 
-        <!-- Overlay para fechar o menu em mobile -->
-        <div class="overlay" id="overlay"></div>
+    <!-- Overlay for sidebar -->
+    <div class="overlay" id="overlay"></div>
 
-        <!-- Conteúdo principal -->
-        <div class="main-content" id="mainContent">
-            <!-- Header -->
-            <div class="header">
-                <button class="hamburger" id="openSidebar">☰</button>
-                <div class="app-title">Registro de Atividades</div>
-                <div class="status">
-                    <span class="status-indicator status-online" id="statusIndicator"></span>
-                    <span id="statusText">Online</span>
+    <!-- Header -->
+    <header>
+        <div class="header-content">
+            <button class="nav-toggle" id="navToggle">
+                <i class="fas fa-bars"></i>
+            </button>
+            <div class="logo" id="mainLogo">Work Manager</div>
+            <div class="user-avatar" id="userAvatar">U</div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="container">
+        <!-- Dashboard Section -->
+        <section id="dashboard" class="section active">
+            <h2><i class="fas fa-tachometer-alt"></i> Dashboard</h2>
+            
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-label"><i class="fas fa-boxes"></i> Produção Total</div>
+                    <div class="stat-value" id="totalProduction">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label"><i class="fas fa-times-circle"></i> Perdas Totais</div>
+                    <div class="stat-value" id="totalLosses">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label"><i class="fas fa-chart-line"></i> Eficiência</div>
+                    <div class="stat-value" id="efficiency">0%</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label"><i class="fas fa-calendar-day"></i> Atividades Hoje</div>
+                    <div class="stat-value" id="activitiesToday">0</div>
                 </div>
             </div>
-
-            <!-- Seções de conteúdo -->
-            <div id="contentSections">
-                <!-- Dashboard -->
-                <section id="dashboardSection" class="content-section">
-                    <h1 class="form-title">Dashboard</h1>
-                    
-                    <div class="kpi-cards">
-                        <div class="kpi-card">
-                            <div class="kpi-value" id="totalProduced">0</div>
-                            <div class="kpi-label">Total Produzido</div>
-                        </div>
-                        <div class="kpi-card">
-                            <div class="kpi-value" id="totalLosses">0</div>
-                            <div class="kpi-label">Total de Perdas</div>
-                        </div>
-                        <div class="kpi-card">
-                            <div class="kpi-value" id="efficiency">0%</div>
-                            <div class="kpi-label">Eficiência</div>
-                        </div>
-                        <div class="kpi-card">
-                            <div class="kpi-value" id="activitiesCount">0</div>
-                            <div class="kpi-label">Atividades Hoje</div>
-                        </div>
-                    </div>
-                    
-                    <div class="chart-container">
-                        <canvas id="productionChart"></canvas>
-                    </div>
-                    
-                    <div class="chart-container">
-                        <canvas id="efficiencyChart"></canvas>
-                    </div>
-                </section>
-
-                <!-- Formulário de registro -->
-                <section id="registerSection" class="content-section hidden">
-                    <h1 class="form-title">Nova Atividade</h1>
-                    
-                    <div class="form-container">
-                        <form id="activityForm">
-                            <div class="form-group">
-                                <label class="form-label" for="description">Descrição da Atividade *</label>
-                                <textarea class="form-textarea" id="description" name="description" required></textarea>
-                            </div>
-                            
-                            <div class="form-group">
-                                <label class="form-label" for="category">Categoria</label>
-                                <select class="form-select" id="category" name="category">
-                                    <option value="">Selecione...</option>
-                                    <option value="Producao">Produção</option>
-                                    <option value="Limpeza">Limpeza</option>
-                                    <option value="Setup">Setup</option>
-                                    <option value="Manutencao">Manutenção</option>
-                                    <option value="Outro">Outro</option>
-                                </select>
-                            </div>
-                            
-                            <div class="form-group">
-                                <label class="form-label" for="produced">Quantidade Produzida *</label>
-                                <input type="number" class="form-input" id="produced" name="produced" min="0" required>
-                            </div>
-                            
-                            <div class="form-group">
-                                <label class="form-label" for="losses">Quantidade de Perdas</label>
-                                <input type="number" class="form-input" id="losses" name="losses" min="0" value="0">
-                            </div>
-                            
-                            <div class="form-group">
-                                <label class="form-label" for="unit">Unidade de Medida</label>
-                                <select class="form-select" id="unit" name="unit">
-                                    <option value="un">Unidade (un)</option>
-                                    <option value="kg">Quilograma (kg)</option>
-                                    <option value="l">Litro (l)</option>
-                                    <option value="lote">Lote</option>
-                                    <option value="caixa">Caixa</option>
-                                </select>
-                            </div>
-                            
-                            <div class="form-group">
-                                <label class="form-label" for="shift">Turno</label>
-                                <select class="form-select" id="shift" name="shift">
-                                    <option value="">Selecione...</option>
-                                    <option value="Manha">Manhã</option>
-                                    <option value="Tarde">Tarde</option>
-                                    <option value="Noite">Noite</option>
-                                </select>
-                            </div>
-                            
-                            <div class="form-group">
-                                <label class="form-label" for="collaborators">Colaboradores Envolvidos</label>
-                                <input type="text" class="form-input" id="collaborators" name="collaborators" placeholder="Nomes separados por vírgula">
-                            </div>
-                            
-                            <div class="form-group">
-                                <label class="form-label" for="tags">Tags</label>
-                                <input type="text" class="form-input" id="tags" name="tags" placeholder="Tags separadas por vírgula">
-                            </div>
-                            
-                            <div class="form-group">
-                                <label class="form-label" for="notes">Observações</label>
-                                <textarea class="form-textarea" id="notes" name="notes"></textarea>
-                            </div>
-                            
-                            <div class="photo-section">
-                                <h3 class="form-label">Fotos de Evidência</h3>
-                                
-                                <div class="camera-container hidden" id="cameraContainer">
-                                    <video id="videoElement" autoplay playsinline></video>
-                                    <button type="button" class="btn btn-primary mt-1" id="captureButton">Capturar Foto</button>
-                                </div>
-                                
-                                <div class="button-group">
-                                    <button type="button" class="btn btn-primary" id="toggleCamera">Abrir Câmera</button>
-                                    <button type="button" class="btn btn-primary" id="uploadPhoto">Upload de Foto</button>
-                                    <input type="file" id="fileInput" accept="image/*" class="hidden">
-                                </div>
-                                
-                                <div class="photo-preview mt-2" id="photoPreview"></div>
-                            </div>
-                            
-                            <div class="button-group mt-3">
-                                <button type="submit" class="btn btn-primary">Salvar Atividade</button>
-                                <button type="button" class="btn btn-success" id="duplicateButton" disabled>Duplicar (Ctrl+D)</button>
-                                <button type="reset" class="btn btn-danger">Limpar</button>
-                            </div>
-                        </form>
-                    </div>
-                </section>
-
-                <!-- Lista de atividades -->
-                <section id="activitiesSection" class="content-section hidden">
-                    <h1 class="form-title">Lista de Atividades</h1>
-                    
-                    <div class="form-container">
-                        <div class="form-group">
-                            <input type="text" class="form-input" id="searchActivities" placeholder="Buscar atividades...">
-                        </div>
-                        
-                        <div class="form-group">
-                            <label class="form-label" for="dateFilter">Filtrar por data:</label>
-                            <div class="filters-container">
-                                <div class="date-filters">
-                                    <input type="date" class="form-input" id="startDate">
-                                    <input type="date" class="form-input" id="endDate">
-                                </div>
-                                <div class="button-group">
-                                    <button class="btn btn-primary" id="applyFilter">Aplicar</button>
-                                    <button class="btn btn-danger" id="clearFilter">Limpar</button>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="activities-table-container">
-                            <table class="activities-table">
-                                <thead>
-                                    <tr>
-                                        <th>Data/Hora</th>
-                                        <th>Descrição</th>
-                                        <th>Categoria</th>
-                                        <th>Produzido</th>
-                                        <th>Perdas</th>
-                                        <th>Eficiência</th>
-                                        <th>Ações</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="activitiesTableBody">
-                                    <!-- Os dados serão preenchidos via JavaScript -->
-                                </tbody>
-                            </table>
-                        </div>
-                        
-                        <div class="mt-2 text-center">
-                            <button class="btn btn-primary" id="loadMoreActivities">Carregar Mais</button>
-                        </div>
-                    </div>
-                </section>
-
-                <!-- Relatórios -->
-                <section id="reportsSection" class="content-section hidden">
-                    <h1 class="form-title">Relatórios</h1>
-                    
-                    <div class="form-container">
-                        <div class="form-group">
-                            <label class="form-label" for="reportRange">Período do Relatório:</label>
-                            <div class="date-filters">
-                                <input type="date" class="form-input" id="reportStartDate">
-                                <input type="date" class="form-input" id="reportEndDate">
-                            </div>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label class="form-label" for="reportType">Tipo de Relatório:</label>
-                            <select class="form-select" id="reportType">
-                                <option value="pdf">PDF Detalhado</option>
-                                <option value="csv">CSV Simples</option>
-                            </select>
-                        </div>
-                        
-                        <div class="form-group">
-                            <button class="btn btn-primary" id="generateReport">Gerar Relatório</button>
-                        </div>
-                    </div>
-                </section>
-
-                <!-- Backup/Restore -->
-                <section id="backupSection" class="content-section hidden">
-                    <h1 class="form-title">Backup e Restauração</h1>
-                    
-                    <div class="form-container">
-                        <div class="form-group">
-                            <h3 class="form-label">Criar Backup</h3>
-                            <p>O backup inclui todas as atividades, fotos e histórico de edições.</p>
-                            <button class="btn btn-primary" id="createBackup">Criar Backup (ZIP)</button>
-                        </div>
-                        
-                        <div class="form-group mt-3">
-                            <h3 class="form-label">Restaurar Backup</h3>
-                            <p>Selecione um arquivo ZIP de backup para restaurar:</p>
-                            <input type="file" class="form-input" id="restoreFile" accept=".zip">
-                            <button class="btn btn-success mt-1" id="restoreBackup" disabled>Restaurar Backup</button>
-                        </div>
-                        
-                        <div class="form-group mt-3">
-                            <h3 class="form-label">Exportar/Importar Dados</h3>
-                            <p>Para interoperabilidade com outros sistemas:</p>
-                            <div class="button-group">
-                                <button class="btn btn-primary" id="exportJSON">Exportar JSON</button>
-                                <button class="btn btn-primary" id="importJSON">Importar JSON</button>
-                                <input type="file" class="hidden" id="importFile" accept=".json">
-                            </div>
-                        </div>
-                    </div>
-                </section>
-
-                <!-- Configurações -->
-                <section id="settingsSection" class="content-section hidden">
-                    <h1 class="form-title">Configurações</h1>
-                    
-                    <div class="form-container">
-                        <div class="form-group">
-                            <label class="form-label" for="userName">Seu Nome</label>
-                            <input type="text" class="form-input" id="userName" placeholder="Seu nome para os registros">
-                        </div>
-                        
-                        <div class="form-group">
-                            <label class="form-label" for="pinCode">PIN de Segurança</label>
-                            <input type="password" class="form-input" id="pinCode" placeholder="Defina um PIN de 4 dígitos" maxlength="4">
-                            <p class="form-text">O PIN é armazenado localmente e usado para proteger o acesso ao sistema.</p>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label class="form-label">
-                                <input type="checkbox" id="darkModeToggle"> Modo Escuro
-                            </label>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label class="form-label">
-                                <input type="checkbox" id="autoBackupToggle"> Backup Automático Diário
-                            </label>
-                        </div>
-                        
-                        <div class="form-group">
-                            <button class="btn btn-primary" id="saveSettings">Salvar Configurações</button>
-                        </div>
-                        
-                        <div class="form-group mt-3">
-                            <h3 class="form-label">Sistema</h3>
-                            <p>Espaço utilizado: <span id="storageUsage">0 MB</span></p>
-                            <p>Versão: 1.0.0</p>
-                            <button class="btn btn-danger" id="clearData">Limpar Todos os Dados</button>
-                        </div>
-                    </div>
-                </section>
+            
+            <div class="card">
+                <h3><i class="fas fa-chart-bar"></i> Produção vs Perdas</h3>
+                <div class="chart-container">
+                    <canvas id="productionChart"></canvas>
+                </div>
             </div>
-        </div>
-    </div>
+            
+            <div class="card">
+                <h3><i class="fas fa-exclamation-triangle"></i> Últimos Incidentes</h3>
+                <ul class="incident-list" id="incidentList">
+                    <!-- Incident items will be added here -->
+                </ul>
+            </div>
+        </section>
 
-    <!-- Modal para visualização de atividade -->
-    <div class="modal" id="activityModal">
+        <!-- Activity Registration Section -->
+        <section id="registro" class="section">
+            <h2><i class="fas fa-plus-circle"></i> Registrar Nova Atividade</h2>
+            
+            <div class="card">
+                <form id="activityForm">
+                    <div class="form-group">
+                        <label for="activityType"><i class="fas fa-tasks"></i> Tipo de Atividade</label>
+                        <select id="activityType" required>
+                            <option value="">Selecione...</option>
+                            <option value="Produção">Produção</option>
+                            <option value="Manutenção">Manutenção</option>
+                            <option value="Qualidade">Controle de Qualidade</option>
+                            <option value="Limpeza">Limpeza e Organização</option>
+                            <option value="Outro">Outro</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="productionQty"><i class="fas fa-box-open"></i> Quantidade Produzida</label>
+                        <input type="number" id="productionQty" min="0" step="1" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="lossQty"><i class="fas fa-times-circle"></i> Quantidade de Perda (se aplicável)</label>
+                        <input type="number" id="lossQty" min="0" step="1" value="0">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="lossType"><i class="fas fa-exclamation-circle"></i> Tipo de Perda (se aplicável)</label>
+                        <select id="lossType">
+                            <option value="">Nenhuma perda</option>
+                            <option value="Defeito">Defeito de Fabricação</option>
+                            <option value="Matéria-prima">Problema com Matéria-prima</option>
+                            <option value="Equipamento">Falha de Equipamento</option>
+                            <option value="Humano">Erro Humano</option>
+                            <option value="Outro">Outro</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="activityDate"><i class="far fa-calendar-alt"></i> Data e Hora</label>
+                        <input type="datetime-local" id="activityDate" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="activityNotes"><i class="far fa-comment-alt"></i> Observações</label>
+                        <textarea id="activityNotes" placeholder="Detalhes adicionais sobre a atividade..."></textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label><i class="fas fa-camera"></i> Fotos (opcional)</label>
+                        <div class="photo-capture-options">
+                            <button type="button" class="btn" id="takePhotoBtn">
+                                <i class="fas fa-camera"></i> Tirar Foto
+                            </button>
+                            <button type="button" class="btn" id="uploadPhotoBtn">
+                                <i class="fas fa-upload"></i> Fazer Upload
+                            </button>
+                        </div>
+                        <video id="cameraPreview" class="camera-preview" autoplay playsinline></video>
+                        <div class="camera-controls" id="cameraControls" style="display: none;">
+                            <button type="button" class="btn btn-success" id="capturePhotoBtn">
+                                <i class="fas fa-camera"></i> Capturar
+                            </button>
+                            <button type="button" class="btn btn-danger" id="cancelCameraBtn">
+                                <i class="fas fa-times"></i> Cancelar
+                            </button>
+                        </div>
+                        <input type="file" id="photoUpload" accept="image/*" multiple style="display: none;">
+                        <div class="photo-preview" id="photoPreview"></div>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-success btn-block">
+                        <i class="fas fa-save"></i> Salvar Atividade
+                    </button>
+                </form>
+            </div>
+        </section>
+
+        <!-- Activities Section -->
+        <section id="atividades" class="section">
+            <h2><i class="fas fa-list"></i> Todas as Atividades</h2>
+            
+            <div class="card">
+                <div class="filter-bar">
+                    <div class="filter-group">
+                        <label for="tableFilterDate"><i class="far fa-calendar"></i> Data</label>
+                        <input type="date" id="tableFilterDate">
+                    </div>
+                    <div class="filter-group">
+                        <label for="tableFilterType"><i class="fas fa-filter"></i> Tipo</label>
+                        <select id="tableFilterType">
+                            <option value="">Todos</option>
+                            <option value="Produção">Produção</option>
+                            <option value="Manutenção">Manutenção</option>
+                            <option value="Qualidade">Controle de Qualidade</option>
+                            <option value="Limpeza">Limpeza e Organização</option>
+                            <option value="Outro">Outro</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label for="tableFilterLoss"><i class="fas fa-exclamation-triangle"></i> Perda</label>
+                        <select id="tableFilterLoss">
+                            <option value="">Todos</option>
+                            <option value="with">Com Perda</option>
+                            <option value="without">Sem Perda</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label>&nbsp;</label>
+                        <button class="btn btn-block" id="applyTableFilters">
+                            <i class="fas fa-filter"></i> Aplicar
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card">
+                <table class="data-table" id="activitiesTable">
+                    <thead>
+                        <tr>
+                            <th>Data/Hora</th>
+                            <th>Tipo</th>
+                            <th>Produção</th>
+                            <th>Perdas</th>
+                            <th>Colaborador</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="activitiesTableBody">
+                        <!-- Table rows will be added here -->
+                    </tbody>
+                </table>
+                
+                <div class="empty-state" id="tableEmptyState" style="display: none;">
+                    <div><i class="fas fa-inbox"></i></div>
+                    <h3>Nenhuma atividade encontrada</h3>
+                    <p>Registre sua primeira atividade no botão abaixo</p>
+                    <a href="#registro" class="btn nav-link">
+                        <i class="fas fa-plus-circle"></i> Registrar Atividade
+                    </a>
+                </div>
+            </div>
+        </section>
+
+        <!-- Reports Section -->
+        <section id="relatorios" class="section">
+            <h2><i class="fas fa-chart-bar"></i> Relatórios</h2>
+            
+            <div class="card">
+                <h3><i class="fas fa-filter"></i> Filtros do Relatório</h3>
+                <div class="report-filters">
+                    <div class="form-group">
+                        <label for="reportPeriod"><i class="fas fa-calendar"></i> Período</label>
+                        <select id="reportPeriod">
+                            <option value="today">Hoje</option>
+                            <option value="week">Esta Semana</option>
+                            <option value="month">Este Mês</option>
+                            <option value="custom">Personalizado</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group" id="customDateRange" style="display: none;">
+                        <label for="startDate"><i class="fas fa-calendar-start"></i> Data Inicial</label>
+                        <input type="date" id="startDate">
+                    </div>
+                    
+                    <div class="form-group" id="customDateRangeEnd" style="display: none;">
+                        <label for="endDate"><i class="fas fa-calendar-end"></i> Data Final</label>
+                        <input type="date" id="endDate">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="reportType"><i class="fas fa-tasks"></i> Tipo de Atividade</label>
+                        <select id="reportType">
+                            <option value="">Todos</option>
+                            <option value="Produção">Produção</option>
+                            <option value="Manutenção">Manutenção</option>
+                            <option value="Qualidade">Controle de Qualidade</option>
+                            <option value="Limpeza">Limpeza e Organização</option>
+                            <option value="Outro">Outro</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>&nbsp;</label>
+                        <button class="btn btn-block" id="generateReport">
+                            <i class="fas fa-file-pdf"></i> Gerar Relatório PDF
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card">
+                <h3><i class="fas fa-table"></i> Visualização Prévia</h3>
+                <div id="reportPreview">
+                    <p>Selecione os filtros e clique em "Gerar Relatório" para visualizar os dados.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Config Section -->
+        <section id="config" class="section">
+            <h2><i class="fas fa-cog"></i> Configurações</h2>
+            
+            <div class="card">
+                <form id="configForm">
+                    <div class="form-group">
+                        <label for="employeeName"><i class="fas fa-user"></i> Nome do Colaborador</label>
+                        <input type="text" id="employeeName" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="company"><i class="fas fa-building"></i> Empresa</label>
+                        <input type="text" id="company">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="department"><i class="fas fa-sitemap"></i> Departamento/Setor</label>
+                        <input type="text" id="department">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="language"><i class="fas fa-language"></i> Idioma</label>
+                        <select id="language">
+                            <option value="pt-BR">Português (Brasil)</option>
+                            <option value="en">English</option>
+                            <option value="es">Español</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="theme"><i class="fas fa-palette"></i> Tema</label>
+                        <select id="theme">
+                            <option value="light">Claro</option>
+                            <option value="dark">Escuro</option>
+                            <option value="auto">Automático (segue o sistema)</option>
+                        </select>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-success">
+                        <i class="fas fa-save"></i> Salvar Configurações
+                    </button>
+                </form>
+            </div>
+        </section>
+
+        <!-- Backup Section -->
+        <section id="backup" class="section">
+            <h2><i class="fas fa-database"></i> Backup e Restauração</h2>
+            
+            <div class="card">
+                <h3><i class="fas fa-file-export"></i> Backup</h3>
+                <p>Faça o backup completo de todos os seus dados, incluindo fotos e registros.</p>
+                <button class="btn btn-success" id="createBackup">
+                    <i class="fas fa-download"></i> Criar Backup Completo (ZIP)
+                </button>
+            </div>
+            
+            <div class="card">
+                <h3><i class="fas fa-file-import"></i> Restauração</h3>
+                <p>Restaurar dados a partir de um backup anterior.</p>
+                <div class="form-group">
+                    <label for="backupFile"><i class="fas fa-file-archive"></i> Arquivo de Backup</label>
+                    <input type="file" id="backupFile" accept=".zip">
+                </div>
+                <button class="btn btn-warning" id="restoreBackup">
+                    <i class="fas fa-upload"></i> Restaurar Backup
+                </button>
+            </div>
+            
+            <div class="card">
+                <h3><i class="fas fa-trash-alt"></i> Limpar Dados</h3>
+                <p>Remover todos os dados do sistema. Esta ação não pode ser desfeita.</p>
+                <button class="btn btn-danger" id="clearData">
+                    <i class="fas fa-trash"></i> Limpar Todos os Dados
+                </button>
+            </div>
+        </section>
+    </main>
+
+    <!-- View Activity Modal -->
+    <div class="modal" id="viewActivityModal">
         <div class="modal-content">
             <div class="modal-header">
-                <h2>Detalhes da Atividade</h2>
-                <button class="modal-close" id="closeModal">×</button>
+                <h3 class="modal-title">Detalhes da Atividade</h3>
+                <button class="close-modal">&times;</button>
             </div>
-            <div id="modalBody">
-                <!-- Conteúdo será preenchido via JavaScript -->
+            <div class="modal-body" id="activityModalBody">
+                <!-- Activity details will be inserted here -->
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline close-modal">Fechar</button>
             </div>
         </div>
     </div>
 
+    <!-- Photo Modal -->
+    <div class="modal" id="photoModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Visualizar Foto</h3>
+                <button class="close-modal">&times;</button>
+            </div>
+            <div class="modal-body" id="photoModalBody">
+                <!-- Photo will be inserted here -->
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline close-modal">Fechar</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
-        // Configuração inicial do banco de dados com Dexie
-        const db = new Dexie('WorkActivityTracker');
-        db.version(1).stores({
-            activities: '++id, timestamp, description, category, produced, losses, unit, shift, collaborators, tags, notes, efficiency',
-            photos: '++id, activityId, timestamp, imageData, hash, exifData',
-            edits: '++id, activityId, timestamp, user, reason, changes',
-            settings: 'key, value'
-        });
+        // DOM Elements
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('overlay');
+        const navToggle = document.getElementById('navToggle');
+        const closeSidebar = document.getElementById('closeSidebar');
+        const navLinks = document.querySelectorAll('.nav-link');
+        const sections = document.querySelectorAll('.section');
+        const activityForm = document.getElementById('activityForm');
+        const configForm = document.getElementById('configForm');
+        const photoUpload = document.getElementById('photoUpload');
+        const takePhotoBtn = document.getElementById('takePhotoBtn');
+        const uploadPhotoBtn = document.getElementById('uploadPhotoBtn');
+        const cameraPreview = document.getElementById('cameraPreview');
+        const cameraControls = document.getElementById('cameraControls');
+        const capturePhotoBtn = document.getElementById('capturePhotoBtn');
+        const cancelCameraBtn = document.getElementById('cancelCameraBtn');
+        const photoPreview = document.getElementById('photoPreview');
+        const createBackupBtn = document.getElementById('createBackup');
+        const restoreBackupBtn = document.getElementById('restoreBackup');
+        const clearDataBtn = document.getElementById('clearData');
+        const applyTableFiltersBtn = document.getElementById('applyTableFilters');
+        const activitiesTableBody = document.getElementById('activitiesTableBody');
+        const tableEmptyState = document.getElementById('tableEmptyState');
+        const reportPeriod = document.getElementById('reportPeriod');
+        const customDateRange = document.getElementById('customDateRange');
+        const customDateRangeEnd = document.getElementById('customDateRangeEnd');
+        const generateReportBtn = document.getElementById('generateReport');
+        const viewActivityModal = document.getElementById('viewActivityModal');
+        const photoModal = document.getElementById('photoModal');
+        const activityModalBody = document.getElementById('activityModalBody');
+        const photoModalBody = document.getElementById('photoModalBody');
+        const closeModalBtns = document.querySelectorAll('.close-modal');
 
-        // Estado da aplicação
-        let appState = {
-            currentActivityId: null,
-            currentPhotos: [],
-            stream: null,
-            activities: [],
-            currentPage: 1,
-            pageSize: 10,
-            settings: {
-                userName: 'Usuário',
-                pinCode: null,
-                darkMode: false,
-                autoBackup: false
+        // Global variables
+        let activities = JSON.parse(localStorage.getItem('activities')) || [];
+        let config = JSON.parse(localStorage.getItem('config')) || {};
+        let stream = null;
+        let capturedPhotos = [];
+
+        // Initialize the application
+        function init() {
+            // Set current date and time
+            const now = new Date();
+            const formattedDateTime = now.toISOString().slice(0, 16);
+            document.getElementById('activityDate').value = formattedDateTime;
+            
+            // Load configuration
+            if (Object.keys(config).length > 0) {
+                document.getElementById('employeeName').value = config.employeeName || '';
+                document.getElementById('company').value = config.company || '';
+                document.getElementById('department').value = config.department || '';
+                document.getElementById('language').value = config.language || 'pt-BR';
+                document.getElementById('theme').value = config.theme || 'light';
+                
+                // Update user avatar with initials
+                if (config.employeeName) {
+                    const names = config.employeeName.split(' ');
+                    const initials = names[0].charAt(0) + (names.length > 1 ? names[names.length - 1].charAt(0) : '');
+                    document.getElementById('userAvatar').textContent = initials;
+                }
             }
-        };
-
-        // Inicialização da aplicação
-        document.addEventListener('DOMContentLoaded', async function() {
-            await initDatabase();
-            await loadSettings();
-            setupEventListeners();
-            updateUI();
-            checkOnlineStatus();
             
-            // Mostrar dashboard por padrão
-            showSection('dashboard');
+            // Load activities table
+            updateActivitiesTable();
             
-            // Carregar atividades iniciais
-            await loadActivities();
+            // Update dashboard
             updateDashboard();
-        });
-
-        // Inicializar o banco de dados
-        async function initDatabase() {
-            try {
-                await db.open();
-                console.log('Banco de dados aberto com sucesso');
-            } catch (error) {
-                console.error('Falha ao abrir o banco de dados:', error);
-            }
+            
+            // Set up event listeners
+            setupEventListeners();
         }
 
-        // Carregar configurações
-        async function loadSettings() {
-            try {
-                const settings = await db.settings.toArray();
-                settings.forEach(setting => {
-                    if (setting.key in appState.settings) {
-                        appState.settings[setting.key] = setting.value;
+        // Set up event listeners
+        function setupEventListeners() {
+            // Navigation
+            navToggle.addEventListener('click', toggleSidebar);
+            closeSidebar.addEventListener('click', toggleSidebar);
+            overlay.addEventListener('click', toggleSidebar);
+            
+            navLinks.forEach(link => {
+                link.addEventListener('click', e => {
+                    e.preventDefault();
+                    const targetId = link.getAttribute('href').substring(1);
+                    showSection(targetId);
+                    
+                    // Close sidebar on mobile after navigation
+                    if (window.innerWidth < 992) {
+                        toggleSidebar();
                     }
                 });
-                
-                // Aplicar modo escuro se estiver ativado
-                if (appState.settings.darkMode) {
-                    document.body.classList.add('dark-mode');
-                    document.getElementById('darkModeToggle').checked = true;
-                }
-                
-                // Preencher campos de configuração
-                if (appState.settings.userName) {
-                    document.getElementById('userName').value = appState.settings.userName;
-                }
-                
-                if (appState.settings.pinCode) {
-                    document.getElementById('pinCode').value = appState.settings.pinCode;
-                }
-                
-                document.getElementById('autoBackupToggle').checked = appState.settings.autoBackup;
-            } catch (error) {
-                console.error('Erro ao carregar configurações:', error);
-            }
-        }
-
-        // Configurar event listeners
-        function setupEventListeners() {
-            // Menu lateral
-            document.getElementById('openSidebar').addEventListener('click', openSidebar);
-            document.getElementById('closeSidebar').addEventListener('click', closeSidebar);
-            document.getElementById('overlay').addEventListener('click', closeSidebar);
+            });
             
-            // Navegação do menu
-            const menuItems = document.querySelectorAll('.sidebar-menu a');
-            menuItems.forEach(item => {
-                item.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    const section = this.getAttribute('data-section');
-                    showSection(section);
-                    closeSidebar();
-                    
-                    // Atualizar classe ativa
-                    menuItems.forEach(i => i.classList.remove('active'));
-                    this.classList.add('active');
+            // Forms
+            activityForm.addEventListener('submit', handleActivitySubmit);
+            configForm.addEventListener('submit', handleConfigSubmit);
+            
+            // Photo handling
+            uploadPhotoBtn.addEventListener('click', () => photoUpload.click());
+            photoUpload.addEventListener('change', handlePhotoUpload);
+            takePhotoBtn.addEventListener('click', startCamera);
+            capturePhotoBtn.addEventListener('click', capturePhoto);
+            cancelCameraBtn.addEventListener('click', stopCamera);
+            
+            // Backup and restore
+            createBackupBtn.addEventListener('click', createBackup);
+            restoreBackupBtn.addEventListener('click', restoreBackup);
+            clearDataBtn.addEventListener('click', clearAllData);
+            
+            // Table filters
+            applyTableFiltersBtn.addEventListener('click', updateActivitiesTable);
+            
+            // Report filters
+            reportPeriod.addEventListener('change', () => {
+                if (reportPeriod.value === 'custom') {
+                    customDateRange.style.display = 'block';
+                    customDateRangeEnd.style.display = 'block';
+                } else {
+                    customDateRange.style.display = 'none';
+                    customDateRangeEnd.style.display = 'none';
+                }
+            });
+            
+            generateReportBtn.addEventListener('click', generateReport);
+            
+            // Modal close buttons
+            closeModalBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    viewActivityModal.classList.remove('active');
+                    photoModal.classList.remove('active');
                 });
             });
-            
-            // Formulário de atividade
-            document.getElementById('activityForm').addEventListener('submit', saveActivity);
-            document.getElementById('toggleCamera').addEventListener('click', toggleCamera);
-            document.getElementById('captureButton').addEventListener('click', capturePhoto);
-            document.getElementById('uploadPhoto').addEventListener('click', triggerUpload);
-            document.getElementById('fileInput').addEventListener('change', handleFileUpload);
-            document.getElementById('duplicateButton').addEventListener('click', duplicateActivity);
-            
-            // Atalhos de teclado
-            document.addEventListener('keydown', handleKeyboardShortcuts);
-            
-            // Lista de atividades
-            document.getElementById('searchActivities').addEventListener('input', filterActivities);
-            document.getElementById('applyFilter').addEventListener('click', filterActivities);
-            document.getElementById('clearFilter').addEventListener('click', clearFilter);
-            document.getElementById('loadMoreActivities').addEventListener('click', loadMoreActivities);
-            
-            // Relatórios
-            document.getElementById('generateReport').addEventListener('click', generateReport);
-            
-            // Backup/Restore
-            document.getElementById('createBackup').addEventListener('click', createBackup);
-            document.getElementById('restoreFile').addEventListener('change', function() {
-                document.getElementById('restoreBackup').disabled = !this.files.length;
-            });
-            document.getElementById('restoreBackup').addEventListener('click', restoreBackup);
-            document.getElementById('exportJSON').addEventListener('click', exportJSON);
-            document.getElementById('importJSON').addEventListener('click', triggerJSONImport);
-            document.getElementById('importFile').addEventListener('change', importJSON);
-            
-            // Configurações
-            document.getElementById('saveSettings').addEventListener('click', saveSettings);
-            document.getElementById('darkModeToggle').addEventListener('change', toggleDarkMode);
-            document.getElementById('clearData').addEventListener('click', clearAllData);
-            
-            // Modal
-            document.getElementById('closeModal').addEventListener('click', closeModal);
-            
-            // Verificar status online/offline
-            window.addEventListener('online', () => updateOnlineStatus(true));
-            window.addEventListener('offline', () => updateOnlineStatus(false));
         }
 
-        // Atualizar a interface
-        function updateUI() {
-            // Atualizar data/hora atual no formulário
-            const now = new Date();
-            document.getElementById('produced').focus();
-            
-            // Atualizar contador de atividades do dia
-            updateTodaysActivityCount();
+        // Toggle sidebar visibility
+        function toggleSidebar() {
+            sidebar.classList.toggle('active');
+            overlay.classList.toggle('active');
         }
 
-        // Mostrar seção específica
+        // Show specific section
         function showSection(sectionId) {
-            // Esconder todas as seções
-            const sections = document.querySelectorAll('.content-section');
-            sections.forEach(section => section.classList.add('hidden'));
-            
-            // Mostrar a seção solicitada
-            document.getElementById(sectionId + 'Section').classList.remove('hidden');
-            
-            // Ações específicas por seção
-            if (sectionId === 'dashboard') {
-                updateDashboard();
-            } else if (sectionId === 'activities') {
-                loadActivities();
-            }
-        }
-
-        // Abrir/fechar menu lateral
-        function openSidebar() {
-            document.getElementById('sidebar').classList.add('active');
-            document.getElementById('overlay').classList.add('active');
-            document.getElementById('mainContent').classList.add('sidebar-open');
-        }
-
-        function closeSidebar() {
-            document.getElementById('sidebar').classList.remove('active');
-            document.getElementById('overlay').classList.remove('active');
-            document.getElementById('mainContent').classList.remove('sidebar-open');
-        }
-
-        // Verificar status online/offline
-        function checkOnlineStatus() {
-            updateOnlineStatus(navigator.onLine);
-        }
-
-        function updateOnlineStatus(online) {
-            const indicator = document.getElementById('statusIndicator');
-            const text = document.getElementById('statusText');
-            
-            if (online) {
-                indicator.classList.remove('status-offline');
-                indicator.classList.add('status-online');
-                text.textContent = 'Online';
-            } else {
-                indicator.classList.remove('status-online');
-                indicator.classList.add('status-offline');
-                text.textContent = 'Offline';
-            }
-        }
-
-        // Alternar câmera
-        async function toggleCamera() {
-            const cameraContainer = document.getElementById('cameraContainer');
-            const toggleButton = document.getElementById('toggleCamera');
-            
-            if (cameraContainer.classList.contains('hidden')) {
-                try {
-                    appState.stream = await navigator.mediaDevices.getUserMedia({ 
-                        video: { facingMode: 'environment' }, 
-                        audio: false 
-                    });
-                    document.getElementById('videoElement').srcObject = appState.stream;
-                    cameraContainer.classList.remove('hidden');
-                    toggleButton.textContent = 'Fechar Câmera';
-                } catch (error) {
-                    console.error('Erro ao acessar a câmera:', error);
-                    alert('Não foi possível acessar a câmera. Verifique as permissões.');
-                }
-            } else {
-                if (appState.stream) {
-                    appState.stream.getTracks().forEach(track => track.stop());
-                    appState.stream = null;
-                }
-                cameraContainer.classList.add('hidden');
-                toggleButton.textContent = 'Abrir Câmera';
-            }
-        }
-
-        // Capturar foto
-        function capturePhoto() {
-            const video = document.getElementById('videoElement');
-            const canvas = document.createElement('canvas');
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
-            canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
-            
-            const imageData = canvas.toDataURL('image/jpeg');
-            addPhotoToPreview(imageData);
-        }
-
-        // Disparar upload de arquivo
-        function triggerUpload() {
-            document.getElementById('fileInput').click();
-        }
-
-        // Manipular upload de arquivo
-        function handleFileUpload(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-            
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                addPhotoToPreview(e.target.result);
-            };
-            reader.readAsDataURL(file);
-            
-            // Limpar o input para permitir upload do mesmo arquivo novamente
-            event.target.value = '';
-        }
-
-        // Adicionar foto à visualização
-        function addPhotoToPreview(imageData) {
-            appState.currentPhotos.push(imageData);
-            
-            const previewContainer = document.getElementById('photoPreview');
-            const thumbnail = document.createElement('div');
-            thumbnail.className = 'photo-thumbnail';
-            
-            const img = document.createElement('img');
-            img.src = imageData;
-            
-            const removeBtn = document.createElement('button');
-            removeBtn.className = 'remove-photo';
-            removeBtn.innerHTML = '×';
-            removeBtn.addEventListener('click', function() {
-                const index = appState.currentPhotos.indexOf(imageData);
-                if (index > -1) {
-                    appState.currentPhotos.splice(index, 1);
-                }
-                thumbnail.remove();
+            sections.forEach(section => {
+                section.classList.remove('active');
             });
             
-            thumbnail.appendChild(img);
-            thumbnail.appendChild(removeBtn);
-            previewContainer.appendChild(thumbnail);
+            navLinks.forEach(link => {
+                link.classList.remove('active');
+            });
+            
+            document.getElementById(sectionId).classList.add('active');
+            document.querySelector(`a[href="#${sectionId}"]`).classList.add('active');
+            
+            // Special handling for certain sections
+            if (sectionId === 'atividades') {
+                updateActivitiesTable();
+            } else if (sectionId === 'dashboard') {
+                updateDashboard();
+            }
         }
 
-        // Salvar atividade
-        async function saveActivity(event) {
-            event.preventDefault();
+        // Handle activity form submission
+        function handleActivitySubmit(e) {
+            e.preventDefault();
             
-            const formData = new FormData(event.target);
-            const produced = parseInt(formData.get('produced')) || 0;
-            const losses = parseInt(formData.get('losses')) || 0;
-            const total = produced + losses;
-            const efficiency = total > 0 ? (produced / total * 100).toFixed(2) : 0;
+            const activityType = document.getElementById('activityType').value;
+            const productionQty = parseInt(document.getElementById('productionQty').value);
+            const lossQty = parseInt(document.getElementById('lossQty').value);
+            const lossType = document.getElementById('lossType').value;
+            const activityDate = document.getElementById('activityDate').value;
+            const activityNotes = document.getElementById('activityNotes').value;
             
+            // Get employee name from config
+            const employeeName = config.employeeName || 'Colaborador não identificado';
+            
+            // Create activity object
             const activity = {
-                timestamp: new Date(),
-                description: formData.get('description'),
-                category: formData.get('category'),
-                produced: produced,
-                losses: losses,
-                unit: formData.get('unit'),
-                shift: formData.get('shift'),
-                collaborators: formData.get('collaborators'),
-                tags: formData.get('tags'),
-                notes: formData.get('notes'),
-                efficiency: efficiency
+                id: Date.now(),
+                type: activityType,
+                production: productionQty,
+                loss: lossQty,
+                lossType: lossType,
+                date: activityDate,
+                notes: activityNotes,
+                photos: capturedPhotos,
+                employee: employeeName,
+                timestamp: new Date().toISOString()
             };
             
-            try {
-                // Salvar atividade no banco de dados
-                const id = await db.activities.add(activity);
-                
-                // Salvar fotos associadas
-                for (const photoData of appState.currentPhotos) {
-                    // Calcular hash da imagem
-                    const hash = await calculateHash(photoData);
-                    
-                    await db.photos.add({
-                        activityId: id,
-                        timestamp: new Date(),
-                        imageData: photoData,
-                        hash: hash,
-                        exifData: {} // Extrair EXIF seria implementado aqui
+            // Add to activities array
+            activities.push(activity);
+            
+            // Save to localStorage
+            localStorage.setItem('activities', JSON.stringify(activities));
+            
+            // Reset form and captured photos
+            activityForm.reset();
+            capturedPhotos = [];
+            photoPreview.innerHTML = '';
+            
+            // Set current date and time
+            const now = new Date();
+            const formattedDateTime = now.toISOString().slice(0, 16);
+            document.getElementById('activityDate').value = formattedDateTime;
+            
+            // Show success message
+            showToast('Atividade registrada com sucesso!');
+            
+            // Update dashboard and activities table
+            updateDashboard();
+        }
+
+        // Handle config form submission
+        function handleConfigSubmit(e) {
+            e.preventDefault();
+            
+            // Get form values
+            config.employeeName = document.getElementById('employeeName').value;
+            config.company = document.getElementById('company').value;
+            config.department = document.getElementById('department').value;
+            config.language = document.getElementById('language').value;
+            config.theme = document.getElementById('theme').value;
+            
+            // Save to localStorage
+            localStorage.setItem('config', JSON.stringify(config));
+            
+            // Update user avatar with initials
+            if (config.employeeName) {
+                const names = config.employeeName.split(' ');
+                const initials = names[0].charAt(0) + (names.length > 1 ? names[names.length - 1].charAt(0) : '');
+                document.getElementById('userAvatar').textContent = initials;
+            }
+            
+            // Show success message
+            showToast('Configurações salvas com sucesso!');
+        }
+
+        // Handle photo upload
+        function handlePhotoUpload(e) {
+            const files = e.target.files;
+            
+            if (files.length > 0) {
+                Array.from(files).forEach(file => {
+                    if (file.type.startsWith('image/')) {
+                        const reader = new FileReader();
+                        
+                        reader.onload = function(e) {
+                            capturedPhotos.push(e.target.result);
+                            renderPhotoPreviews();
+                        };
+                        
+                        reader.readAsDataURL(file);
+                    }
+                });
+            }
+        }
+
+        // Start camera for taking photos
+        function startCamera() {
+            if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+                navigator.mediaDevices.getUserMedia({ video: true })
+                    .then(function(mediaStream) {
+                        stream = mediaStream;
+                        cameraPreview.srcObject = mediaStream;
+                        cameraPreview.style.display = 'block';
+                        cameraControls.style.display = 'flex';
+                        takePhotoBtn.style.display = 'none';
+                        uploadPhotoBtn.style.display = 'none';
+                    })
+                    .catch(function(error) {
+                        console.error('Error accessing camera:', error);
+                        showToast('Não foi possível acessar a câmera.');
                     });
-                }
-                
-                // Limpar formulário e fotos
-                event.target.reset();
-                appState.currentPhotos = [];
-                document.getElementById('photoPreview').innerHTML = '';
-                
-                alert('Atividade salva com sucesso!');
-                
-                // Atualizar dashboard e lista
-                await loadActivities();
-                updateDashboard();
-                updateTodaysActivityCount();
-                
-            } catch (error) {
-                console.error('Erro ao salvar atividade:', error);
-                alert('Erro ao salvar atividade. Tente novamente.');
+            } else {
+                showToast('Seu navegador não suporta acesso à câmera.');
             }
         }
 
-        // Calcular hash SHA-256
-        async function calculateHash(data) {
-            // Usando CryptoJS para calcular o hash
-            return CryptoJS.SHA256(data).toString();
-        }
-
-        // Duplicar atividade
-        function duplicateActivity() {
-            // Implementação simplificada - preencher formulário com dados da última atividade
-            alert('Funcionalidade de duplicação será implementada aqui.');
-        }
-
-        // Manipular atalhos de teclado
-        function handleKeyboardShortcuts(event) {
-            // Ctrl+S para salvar
-            if (event.ctrlKey && event.key === 's') {
-                event.preventDefault();
-                document.getElementById('activityForm').dispatchEvent(new Event('submit'));
+        // Stop camera
+        function stopCamera() {
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+                stream = null;
             }
             
-            // Ctrl+D para duplicar
-            if (event.ctrlKey && event.key === 'd') {
-                event.preventDefault();
-                duplicateActivity();
-            }
-            
-            // Ctrl+Shift+F para nova foto
-            if (event.ctrlKey && event.shiftKey && event.key === 'F') {
-                event.preventDefault();
-                triggerUpload();
-            }
+            cameraPreview.style.display = 'none';
+            cameraControls.style.display = 'none';
+            takePhotoBtn.style.display = 'block';
+            uploadPhotoBtn.style.display = 'block';
         }
 
-        // Carregar atividades
-        async function loadActivities() {
-            try {
-                // Carregar atividades do banco de dados
-                const activities = await db.activities
-                    .reverse()
-                    .offset((appState.currentPage - 1) * appState.pageSize)
-                    .limit(appState.pageSize)
-                    .toArray();
+        // Capture photo from camera
+        function capturePhoto() {
+            const canvas = document.createElement('canvas');
+            canvas.width = cameraPreview.videoWidth;
+            canvas.height = cameraPreview.videoHeight;
+            
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(cameraPreview, 0, 0, canvas.width, canvas.height);
+            
+            const dataUrl = canvas.toDataURL('image/jpeg');
+            capturedPhotos.push(dataUrl);
+            
+            renderPhotoPreviews();
+            stopCamera();
+        }
+
+        // Render photo previews
+        function renderPhotoPreviews() {
+            photoPreview.innerHTML = '';
+            
+            capturedPhotos.forEach((photo, index) => {
+                const img = document.createElement('img');
+                img.src = photo;
+                img.className = 'photo-thumbnail';
+                img.addEventListener('click', () => viewPhoto(photo));
                 
-                appState.activities = activities;
-                renderActivitiesTable();
-            } catch (error) {
-                console.error('Erro ao carregar atividades:', error);
-            }
+                photoPreview.appendChild(img);
+            });
         }
 
-        // Renderizar tabela de atividades
-        function renderActivitiesTable() {
-            const tbody = document.getElementById('activitiesTableBody');
-            tbody.innerHTML = '';
+        // View photo in modal
+        function viewPhoto(photoData) {
+            photoModalBody.innerHTML = `<img src="${photoData}" style="width: 100%; border-radius: 8px;">`;
+            photoModal.classList.add('active');
+        }
+
+        // Update activities table
+        function updateActivitiesTable() {
+            const filterDate = document.getElementById('tableFilterDate').value;
+            const filterType = document.getElementById('tableFilterType').value;
+            const filterLoss = document.getElementById('tableFilterLoss').value;
             
-            if (appState.activities.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="7" class="text-center">Nenhuma atividade encontrada.</td></tr>';
+            let filteredActivities = [...activities];
+            
+            // Apply filters
+            if (filterDate) {
+                filteredActivities = filteredActivities.filter(activity => {
+                    return activity.date.startsWith(filterDate);
+                });
+            }
+            
+            if (filterType) {
+                filteredActivities = filteredActivities.filter(activity => {
+                    return activity.type === filterType;
+                });
+            }
+            
+            if (filterLoss === 'with') {
+                filteredActivities = filteredActivities.filter(activity => {
+                    return activity.loss > 0;
+                });
+            } else if (filterLoss === 'without') {
+                filteredActivities = filteredActivities.filter(activity => {
+                    return activity.loss === 0;
+                });
+            }
+            
+            // Sort by date (newest first)
+            filteredActivities.sort((a, b) => new Date(b.date) - new Date(a.date));
+            
+            // Clear table body
+            activitiesTableBody.innerHTML = '';
+            
+            if (filteredActivities.length === 0) {
+                tableEmptyState.style.display = 'block';
                 return;
             }
             
-            appState.activities.forEach(activity => {
+            tableEmptyState.style.display = 'none';
+            
+            // Add rows to table
+            filteredActivities.forEach(activity => {
                 const row = document.createElement('tr');
                 
-                const date = new Date(activity.timestamp).toLocaleString();
+                const date = new Date(activity.date);
+                const formattedDate = date.toLocaleDateString('pt-BR');
+                const formattedTime = date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
                 
                 row.innerHTML = `
-                    <td>${date}</td>
-                    <td>${activity.description}</td>
-                    <td>${activity.category || '-'}</td>
-                    <td>${activity.produced} ${activity.unit}</td>
-                    <td>${activity.losses} ${activity.unit}</td>
-                    <td>${activity.efficiency}%</td>
-                    <td>
-                        <button class="btn btn-primary view-activity" data-id="${activity.id}">Ver</button>
-                        <button class="btn btn-success edit-activity" data-id="${activity.id}">Editar</button>
+                    <td>${formattedDate} ${formattedTime}</td>
+                    <td>${activity.type}</td>
+                    <td>${activity.production}</td>
+                    <td>${activity.loss > 0 ? `${activity.loss} (${activity.lossType})` : 'Nenhuma'}</td>
+                    <td>${activity.employee}</td>
+                    <td class="table-actions">
+                        <button class="btn btn-outline table-action-btn view-activity" data-id="${activity.id}">
+                            <i class="fas fa-eye"></i>
+                        </button>
                     </td>
                 `;
                 
-                tbody.appendChild(row);
+                activitiesTableBody.appendChild(row);
             });
             
-            // Adicionar event listeners aos botões
+            // Add event listeners to view buttons
             document.querySelectorAll('.view-activity').forEach(btn => {
-                btn.addEventListener('click', function() {
-                    viewActivity(parseInt(this.getAttribute('data-id')));
-                });
-            });
-            
-            document.querySelectorAll('.edit-activity').forEach(btn => {
-                btn.addEventListener('click', function() {
-                    editActivity(parseInt(this.getAttribute('data-id')));
+                btn.addEventListener('click', () => {
+                    const activityId = parseInt(btn.getAttribute('data-id'));
+                    viewActivity(activityId);
                 });
             });
         }
 
-        // Ver atividade
-        async function viewActivity(id) {
-            try {
-                const activity = await db.activities.get(id);
-                const photos = await db.photos.where('activityId').equals(id).toArray();
-                
-                let modalContent = `
-                    <h3>${activity.description}</h3>
-                    <p><strong>Data/Hora:</strong> ${new Date(activity.timestamp).toLocaleString()}</p>
-                    <p><strong>Categoria:</strong> ${activity.category || 'Não informada'}</p>
-                    <p><strong>Produzido:</strong> ${activity.produced} ${activity.unit}</p>
-                    <p><strong>Perdas:</strong> ${activity.losses} ${activity.unit}</p>
-                    <p><strong>Eficiência:</strong> ${activity.efficiency}%</p>
-                    <p><strong>Turno:</strong> ${activity.shift || 'Não informado'}</p>
-                    <p><strong>Colaboradores:</strong> ${activity.collaborators || 'Não informados'}</p>
-                    <p><strong>Tags:</strong> ${activity.tags || 'Nenhuma'}</p>
-                    <p><strong>Observações:</strong> ${activity.notes || 'Nenhuma'}</p>
+        // View activity details
+        function viewActivity(activityId) {
+            const activity = activities.find(a => a.id === activityId);
+            
+            if (!activity) return;
+            
+            const date = new Date(activity.date);
+            const formattedDate = date.toLocaleDateString('pt-BR');
+            const formattedTime = date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+            
+            let photosHtml = '';
+            if (activity.photos && activity.photos.length > 0) {
+                photosHtml = `
+                    <div class="activity-detail">
+                        <div class="activity-detail-label">Fotos:</div>
+                        <div class="photo-gallery">
+                            ${activity.photos.map(photo => `
+                                <div class="gallery-item">
+                                    <img src="${photo}" onclick="viewPhoto('${photo}')">
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
                 `;
-                
-                if (photos.length > 0) {
-                    modalContent += `<h4>Fotos (${photos.length})</h4><div class="photo-preview">`;
-                    photos.forEach(photo => {
-                        modalContent += `
-                            <div class="photo-thumbnail">
-                                <img src="${photo.imageData}" alt="Foto da atividade">
-                                <p><small>Hash: ${photo.hash.substring(0, 16)}...</small></p>
-                            </div>
-                        `;
-                    });
-                    modalContent += '</div>';
-                }
-                
-                document.getElementById('modalBody').innerHTML = modalContent;
-                document.getElementById('activityModal').classList.add('active');
-                
-            } catch (error) {
-                console.error('Erro ao carregar atividade:', error);
-                alert('Erro ao carregar atividade.');
-            }
-        }
-
-        // Editar atividade
-        async function editActivity(id) {
-            // Implementação simplificada - em um sistema real, isso criaria uma nova versão
-            // com registro de alterações conforme especificado
-            alert(`Edição da atividade ${id} - Esta ação criará um novo registro de versão.`);
-        }
-
-        // Fechar modal
-        function closeModal() {
-            document.getElementById('activityModal').classList.remove('active');
-        }
-
-        // Filtrar atividades
-        async function filterActivities() {
-            // Implementação simplificada - filtrar atividades por termo de busca e data
-            const searchTerm = document.getElementById('searchActivities').value.toLowerCase();
-            const startDate = document.getElementById('startDate').value;
-            const endDate = document.getElementById('endDate').value;
-            
-            let filteredActivities = await db.activities.toArray();
-            
-            if (searchTerm) {
-                filteredActivities = filteredActivities.filter(a => 
-                    a.description.toLowerCase().includes(searchTerm) ||
-                    (a.tags && a.tags.toLowerCase().includes(searchTerm)) ||
-                    (a.notes && a.notes.toLowerCase().includes(searchTerm))
-                );
             }
             
-            if (startDate) {
-                const start = new Date(startDate);
-                filteredActivities = filteredActivities.filter(a => new Date(a.timestamp) >= start);
-            }
+            activityModalBody.innerHTML = `
+                <div class="activity-detail">
+                    <div class="activity-detail-label">Data e Hora:</div>
+                    <div class="activity-detail-value">${formattedDate} às ${formattedTime}</div>
+                </div>
+                
+                <div class="activity-detail">
+                    <div class="activity-detail-label">Tipo de Atividade:</div>
+                    <div class="activity-detail-value">${activity.type}</div>
+                </div>
+                
+                <div class="activity-detail">
+                    <div class="activity-detail-label">Quantidade Produzida:</div>
+                    <div class="activity-detail-value">${activity.production}</div>
+                </div>
+                
+                <div class="activity-detail">
+                    <div class="activity-detail-label">Quantidade de Perda:</div>
+                    <div class="activity-detail-value">${activity.loss > 0 ? `${activity.loss} (${activity.lossType})` : 'Nenhuma perda'}</div>
+                </div>
+                
+                <div class="activity-detail">
+                    <div class="activity-detail-label">Colaborador:</div>
+                    <div class="activity-detail-value">${activity.employee}</div>
+                </div>
+                
+                <div class="activity-detail">
+                    <div class="activity-detail-label">Observações:</div>
+                    <div class="activity-detail-value">${activity.notes || 'Nenhuma observação'}</div>
+                </div>
+                
+                ${photosHtml}
+            `;
             
-            if (endDate) {
-                const end = new Date(endDate);
-                end.setHours(23, 59, 59, 999);
-                filteredActivities = filteredActivities.filter(a => new Date(a.timestamp) <= end);
-            }
-            
-            appState.activities = filteredActivities;
-            renderActivitiesTable();
+            viewActivityModal.classList.add('active');
         }
 
-        // Limpar filtros
-        function clearFilter() {
-            document.getElementById('searchActivities').value = '';
-            document.getElementById('startDate').value = '';
-            document.getElementById('endDate').value = '';
-            loadActivities();
-        }
-
-        // Carregar mais atividades
-        function loadMoreActivities() {
-            appState.currentPage++;
-            loadActivities();
-        }
-
-        // Atualizar dashboard
-        async function updateDashboard() {
-            try {
-                const activities = await db.activities.toArray();
-                
-                // Calcular totais
-                const totalProduced = activities.reduce((sum, a) => sum + a.produced, 0);
-                const totalLosses = activities.reduce((sum, a) => sum + a.losses, 0);
-                const totalActivities = activities.length;
-                
-                const total = totalProduced + totalLosses;
-                const overallEfficiency = total > 0 ? (totalProduced / total * 100).toFixed(2) : 0;
-                
-                // Atualizar KPIs
-                document.getElementById('totalProduced').textContent = totalProduced;
-                document.getElementById('totalLosses').textContent = totalLosses;
-                document.getElementById('efficiency').textContent = `${overallEfficiency}%`;
-                document.getElementById('activitiesCount').textContent = totalActivities;
-                
-                // Atualizar gráficos (implementação simplificada)
-                updateCharts(activities);
-                
-            } catch (error) {
-                console.error('Erro ao atualizar dashboard:', error);
-            }
-        }
-
-        // Atualizar gráficos
-        function updateCharts(activities) {
-            // Agrupar atividades por data (implementação simplificada)
-            const dailyData = {};
+        // Update dashboard
+        function updateDashboard() {
+            // Calculate stats
+            const totalProduction = activities.reduce((sum, activity) => sum + activity.production, 0);
+            const totalLosses = activities.reduce((sum, activity) => sum + activity.loss, 0);
+            const efficiency = totalProduction > 0 ? ((totalProduction - totalLosses) / totalProduction * 100).toFixed(1) : 0;
             
-            activities.forEach(activity => {
-                const date = new Date(activity.timestamp).toLocaleDateString();
-                if (!dailyData[date]) {
-                    dailyData[date] = { produced: 0, losses: 0, count: 0 };
-                }
-                
-                dailyData[date].produced += activity.produced;
-                dailyData[date].losses += activity.losses;
-                dailyData[date].count++;
-            });
+            // Get today's activities count
+            const today = new Date().toLocaleDateString('pt-BR');
+            const activitiesToday = activities.filter(activity => {
+                const activityDate = new Date(activity.date).toLocaleDateString('pt-BR');
+                return activityDate === today;
+            }).length;
             
-            const dates = Object.keys(dailyData);
-            const producedData = dates.map(date => dailyData[date].produced);
-            const lossesData = dates.map(date => dailyData[date].losses);
-            const efficiencyData = dates.map(date => {
-                const total = dailyData[date].produced + dailyData[date].losses;
-                return total > 0 ? (dailyData[date].produced / total * 100) : 0;
-            });
+            // Update DOM elements
+            document.getElementById('totalProduction').textContent = totalProduction;
+            document.getElementById('totalLosses').textContent = totalLosses;
+            document.getElementById('efficiency').textContent = `${efficiency}%`;
+            document.getElementById('activitiesToday').textContent = activitiesToday;
             
-            // Gráfico de produção e perdas
-            const productionCtx = document.getElementById('productionChart').getContext('2d');
-            if (window.productionChart) {
-                window.productionChart.destroy();
-            }
-            window.productionChart = new Chart(productionCtx, {
-                type: 'bar',
-                data: {
-                    labels: dates,
-                    datasets: [
-                        {
-                            label: 'Produzido',
-                            data: producedData,
-                            backgroundColor: 'rgba(52, 152, 219, 0.7)'
-                        },
-                        {
-                            label: 'Perdas',
-                            data: lossesData,
-                            backgroundColor: 'rgba(231, 76, 60, 0.7)'
-                        }
-                    ]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: true,
-                    scales: {
-                        y: {
-                            beginAtZero: true
-                        }
-                    }
-                }
-            });
+            // Update incident list
+            const incidentList = document.getElementById('incidentList');
+            incidentList.innerHTML = '';
             
-            // Gráfico de eficiência
-            const efficiencyCtx = document.getElementById('efficiencyChart').getContext('2d');
-            if (window.efficiencyChart) {
-                window.efficiencyChart.destroy();
-            }
-            window.efficiencyChart = new Chart(efficiencyCtx, {
-                type: 'line',
-                data: {
-                    labels: dates,
-                    datasets: [
-                        {
-                            label: 'Eficiência (%)',
-                            data: efficiencyData,
-                            borderColor: 'rgba(46, 204, 113, 1)',
-                            backgroundColor: 'rgba(46, 204, 113, 0.2)',
-                            fill: true
-                        }
-                    ]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: true,
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            max: 100
-                        }
-                    }
-                }
-            });
-        }
-
-        // Atualizar contador de atividades do dia
-        async function updateTodaysActivityCount() {
-            try {
-                const today = new Date();
-                today.setHours(0, 0, 0, 0);
-                
-                const tomorrow = new Date(today);
-                tomorrow.setDate(tomorrow.getDate() + 1);
-                
-                const count = await db.activities
-                    .where('timestamp')
-                    .between(today, tomorrow)
-                    .count();
-                
-                // Poderia exibir este count em algum lugar da UI
-                console.log(`Atividades hoje: ${count}`);
-            } catch (error) {
-                console.error('Erro ao contar atividades do dia:', error);
-            }
-        }
-
-        // Gerar relatório
-        async function generateReport() {
-            const startDate = document.getElementById('reportStartDate').value;
-            const endDate = document.getElementById('reportEndDate').value;
-            const reportType = document.getElementById('reportType').value;
+            // Get activities with losses (incidents)
+            const incidents = activities
+                .filter(activity => activity.loss > 0)
+                .sort((a, b) => new Date(b.date) - new Date(a.date))
+                .slice(0, 5);
             
-            if (!startDate || !endDate) {
-                alert('Selecione um período para o relatório.');
+            if (incidents.length === 0) {
+                incidentList.innerHTML = '<li class="incident-item">Nenhum incidente registrado</li>';
                 return;
             }
             
-            try {
-                const start = new Date(startDate);
-                const end = new Date(endDate);
-                end.setHours(23, 59, 59, 999);
+            incidents.forEach(activity => {
+                const date = new Date(activity.date);
+                const formattedDate = date.toLocaleDateString('pt-BR');
                 
-                const activities = await db.activities
-                    .where('timestamp')
-                    .between(start, end)
-                    .toArray();
+                const li = document.createElement('li');
+                li.className = 'incident-item';
+                li.innerHTML = `
+                    <div>
+                        <span class="incident-type">${activity.lossType}</span>
+                        <p>${activity.type} - ${activity.loss} unidades perdidas</p>
+                    </div>
+                    <div class="incident-date">${formattedDate}</div>
+                `;
                 
-                if (activities.length === 0) {
-                    alert('Nenhuma atividade encontrada no período selecionado.');
-                    return;
-                }
-                
-                if (reportType === 'pdf') {
-                    generatePDFReport(activities, start, end);
-                } else {
-                    exportCSV(activities);
-                }
-                
-            } catch (error) {
-                console.error('Erro ao gerar relatório:', error);
-                alert('Erro ao gerar relatório.');
-            }
-        }
-
-        // Gerar relatório PDF
-        function generatePDFReport(activities, startDate, endDate) {
-            alert('Gerando relatório PDF...');
-            // Implementação real usaria html2pdf ou jsPDF
-            // Esta é uma implementação simplificada
-        }
-
-        // Exportar CSV
-        function exportCSV(activities) {
-            let csv = 'Data,Hora,Descrição,Categoria,Produzido,Perdas,Unidade,Eficiência\n';
-            
-            activities.forEach(activity => {
-                const date = new Date(activity.timestamp);
-                const dateStr = date.toLocaleDateString();
-                const timeStr = date.toLocaleTimeString();
-                
-                csv += `"${dateStr}","${timeStr}","${activity.description}","${activity.category || ''}",${activity.produced},${activity.losses},"${activity.unit}",${activity.efficiency}\n`;
+                incidentList.appendChild(li);
             });
             
-            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-            const link = document.createElement('a');
-            const url = URL.createObjectURL(blob);
-            
-            link.setAttribute('href', url);
-            link.setAttribute('download', `atividades_${new Date().toISOString().slice(0, 10)}.csv`);
-            link.style.visibility = 'hidden';
-            
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
+            // Update chart
+            updateProductionChart();
         }
 
-        // Criar backup
-        async function createBackup() {
-            try {
-                alert('Criando backup...');
+        // Update production chart
+        function updateProductionChart() {
+            const ctx = document.getElementById('productionChart').getContext('2d');
+            
+            // Group activities by date
+            const activitiesByDate = {};
+            
+            activities.forEach(activity => {
+                const date = new Date(activity.date).toLocaleDateString('pt-BR');
                 
-                // Coletar todos os dados
-                const activities = await db.activities.toArray();
-                const photos = await db.photos.toArray();
-                const edits = await db.edits.toArray();
-                const settings = await db.settings.toArray();
+                if (!activitiesByDate[date]) {
+                    activitiesByDate[date] = {
+                        production: 0,
+                        loss: 0
+                    };
+                }
                 
-                // Criar objeto de backup
-                const backupData = {
-                    version: 1,
-                    timestamp: new Date().toISOString(),
-                    activities: activities,
-                    photos: photos,
-                    edits: edits,
-                    settings: settings
-                };
+                activitiesByDate[date].production += activity.production;
+                activitiesByDate[date].loss += activity.loss;
+            });
+            
+            // Get last 7 days
+            const dates = [];
+            const productionData = [];
+            const lossData = [];
+            
+            for (let i = 6; i >= 0; i--) {
+                const date = new Date();
+                date.setDate(date.getDate() - i);
+                const dateString = date.toLocaleDateString('pt-BR');
                 
-                // Converter para JSON
-                const jsonData = JSON.stringify(backupData);
+                dates.push(dateString);
                 
-                // Criar ZIP (usando JSZip)
-                const zip = new JSZip();
-                zip.file('backup.json', jsonData);
-                
-                // Adicionar fotos (em um sistema real, separaria as imagens)
-                // Esta é uma implementação simplificada
-                
-                // Gerar ZIP
-                const zipContent = await zip.generateAsync({ type: 'blob' });
-                
-                // Fazer download
-                const link = document.createElement('a');
-                const url = URL.createObjectURL(zipContent);
-                
-                link.setAttribute('href', url);
-                link.setAttribute('download', `backup_atividades_${new Date().toISOString().slice(0, 10)}.zip`);
-                link.style.visibility = 'hidden';
-                
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-                
-                alert('Backup criado com sucesso!');
-                
-            } catch (error) {
-                console.error('Erro ao criar backup:', error);
-                alert('Erro ao criar backup.');
+                if (activitiesByDate[dateString]) {
+                    productionData.push(activitiesByDate[dateString].production);
+                    lossData.push(activitiesByDate[dateString].loss);
+                } else {
+                    productionData.push(0);
+                    lossData.push(0);
+                }
+            }
+            
+            // Create or update chart
+            if (window.productionChartInstance) {
+                window.productionChartInstance.data.labels = dates;
+                window.productionChartInstance.data.datasets[0].data = productionData;
+                window.productionChartInstance.data.datasets[1].data = lossData;
+                window.productionChartInstance.update();
+            } else {
+                window.productionChartInstance = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: dates,
+                        datasets: [
+                            {
+                                label: 'Produção',
+                                data: productionData,
+                                backgroundColor: 'rgba(46, 204, 113, 0.7)',
+                                borderColor: 'rgba(46, 204, 113, 1)',
+                                borderWidth: 1
+                            },
+                            {
+                                label: 'Perdas',
+                                data: lossData,
+                                backgroundColor: 'rgba(231, 76, 60, 0.7)',
+                                borderColor: 'rgba(231, 76, 60, 1)',
+                                borderWidth: 1
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: {
+                                beginAtZero: true
+                            }
+                        }
+                    }
+                });
             }
         }
 
-        // Restaurar backup
-        async function restoreBackup() {
-            const fileInput = document.getElementById('restoreFile');
+        // Generate report
+        function generateReport() {
+            const period = reportPeriod.value;
+            const type = document.getElementById('reportType').value;
+            let startDate, endDate;
+            
+            // Set date range based on period
+            const today = new Date();
+            
+            switch (period) {
+                case 'today':
+                    startDate = new Date(today);
+                    endDate = new Date(today);
+                    break;
+                case 'week':
+                    startDate = new Date(today);
+                    startDate.setDate(today.getDate() - 7);
+                    endDate = new Date(today);
+                    break;
+                case 'month':
+                    startDate = new Date(today);
+                    startDate.setMonth(today.getMonth() - 1);
+                    endDate = new Date(today);
+                    break;
+                case 'custom':
+                    startDate = new Date(document.getElementById('startDate').value);
+                    endDate = new Date(document.getElementById('endDate').value);
+                    break;
+            }
+            
+            // Filter activities
+            let filteredActivities = activities.filter(activity => {
+                const activityDate = new Date(activity.date);
+                return activityDate >= startDate && activityDate <= endDate;
+            });
+            
+            if (type) {
+                filteredActivities = filteredActivities.filter(activity => activity.type === type);
+            }
+            
+            // Generate report preview
+            const reportPreview = document.getElementById('reportPreview');
+            
+            if (filteredActivities.length === 0) {
+                reportPreview.innerHTML = '<p>Nenhuma atividade encontrada para os filtros selecionados.</p>';
+                return;
+            }
+            
+            // Calculate totals
+            const totalProduction = filteredActivities.reduce((sum, activity) => sum + activity.production, 0);
+            const totalLoss = filteredActivities.reduce((sum, activity) => sum + activity.loss, 0);
+            const efficiency = totalProduction > 0 ? ((totalProduction - totalLoss) / totalProduction * 100).toFixed(1) : 0;
+            
+            // Create report HTML
+            let reportHtml = `
+                <h4>Relatório de Atividades</h4>
+                <p><strong>Período:</strong> ${startDate.toLocaleDateString('pt-BR')} a ${endDate.toLocaleDateString('pt-BR')}</p>
+                <p><strong>Tipo:</strong> ${type || 'Todos'}</p>
+                <p><strong>Total de Produção:</strong> ${totalProduction}</p>
+                <p><strong>Total de Perdas:</strong> ${totalLoss}</p>
+                <p><strong>Eficiência:</strong> ${efficiency}%</p>
+                
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Data</th>
+                            <th>Tipo</th>
+                            <th>Produção</th>
+                            <th>Perdas</th>
+                            <th>Colaborador</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+            
+            filteredActivities.forEach(activity => {
+                const date = new Date(activity.date);
+                const formattedDate = date.toLocaleDateString('pt-BR');
+                const formattedTime = date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+                
+                reportHtml += `
+                    <tr>
+                        <td>${formattedDate} ${formattedTime}</td>
+                        <td>${activity.type}</td>
+                        <td>${activity.production}</td>
+                        <td>${activity.loss > 0 ? `${activity.loss} (${activity.lossType})` : 'Nenhuma'}</td>
+                        <td>${activity.employee}</td>
+                    </tr>
+                `;
+            });
+            
+            reportHtml += `
+                    </tbody>
+                </table>
+                
+                <div style="margin-top: 20px;">
+                    <button class="btn btn-success" id="exportPdf">
+                        <i class="fas fa-file-pdf"></i> Exportar como PDF
+                    </button>
+                </div>
+            `;
+            
+            reportPreview.innerHTML = reportHtml;
+            
+            // Add event listener to export button
+            document.getElementById('exportPdf').addEventListener('click', () => {
+                showToast('Funcionalidade de exportação PDF será implementada em breve!');
+            });
+        }
+
+        // Create backup
+        function createBackup() {
+            try {
+                // Create backup object
+                const backupData = {
+                    activities: activities,
+                    config: config,
+                    timestamp: new Date().toISOString()
+                };
+                
+                // Convert to JSON
+                const jsonData = JSON.stringify(backupData);
+                
+                // Create zip file
+                const zip = new JSZip();
+                zip.file("backup.json", jsonData);
+                
+                // Add photos to zip
+                const imgFolder = zip.folder("photos");
+                let photoCount = 0;
+                
+                activities.forEach((activity, activityIndex) => {
+                    if (activity.photos && activity.photos.length > 0) {
+                        activity.photos.forEach((photo, photoIndex) => {
+                            // Convert base64 to blob
+                            const base64Data = photo.split(',')[1];
+                            const blob = b64toBlob(base64Data, 'image/jpeg');
+                            
+                            // Add to zip
+                            imgFolder.file(`activity_${activityIndex}_photo_${photoIndex}.jpg`, blob);
+                            photoCount++;
+                        });
+                    }
+                });
+                
+                // Generate zip file
+                zip.generateAsync({ type: "blob" })
+                    .then(function(content) {
+                        // Create download link
+                        const a = document.createElement("a");
+                        const date = new Date();
+                        const dateStr = date.toISOString().split('T')[0];
+                        a.href = URL.createObjectURL(content);
+                        a.download = `work_manager_backup_${dateStr}.zip`;
+                        a.click();
+                        
+                        showToast(`Backup criado com sucesso! ${photoCount} fotos incluídas.`);
+                    });
+            } catch (error) {
+                console.error('Error creating backup:', error);
+                showToast('Erro ao criar backup.');
+            }
+        }
+
+        // Convert base64 to blob
+        function b64toBlob(b64Data, contentType, sliceSize) {
+            contentType = contentType || '';
+            sliceSize = sliceSize || 512;
+
+            const byteCharacters = atob(b64Data);
+            const byteArrays = [];
+
+            for (let offset = 0; offset < byteCharacters.length; offset += sliceSize) {
+                const slice = byteCharacters.slice(offset, offset + sliceSize);
+
+                const byteNumbers = new Array(slice.length);
+                for (let i = 0; i < slice.length; i++) {
+                    byteNumbers[i] = slice.charCodeAt(i);
+                }
+
+                const byteArray = new Uint8Array(byteNumbers);
+                byteArrays.push(byteArray);
+            }
+
+            return new Blob(byteArrays, { type: contentType });
+        }
+
+        // Restore backup
+        function restoreBackup() {
+            const fileInput = document.getElementById('backupFile');
             const file = fileInput.files[0];
             
             if (!file) {
-                alert('Selecione um arquivo de backup.');
+                showToast('Selecione um arquivo de backup primeiro.');
                 return;
             }
             
-            if (!confirm('ATENÇÃO: Esta ação substituirá todos os dados atuais. Continuar?')) {
+            if (!file.name.endsWith('.zip')) {
+                showToast('O arquivo deve ser um backup ZIP válido.');
                 return;
             }
             
-            try {
-                alert('Restaurando backup...');
-                
-                // Ler arquivo ZIP
+            const reader = new FileReader();
+            
+            reader.onload = function(e) {
                 const zip = new JSZip();
-                const zipContent = await zip.loadAsync(file);
                 
-                // Extrair backup.json
-                const backupJson = await zipContent.file('backup.json').async('text');
-                const backupData = JSON.parse(backupJson);
-                
-                // Verificar versão
-                if (backupData.version !== 1) {
-                    throw new Error('Versão de backup não suportada.');
-                }
-                
-                // Limpar banco de dados atual
-                await db.activities.clear();
-                await db.photos.clear();
-                await db.edits.clear();
-                await db.settings.clear();
-                
-                // Restaurar dados
-                await db.activities.bulkAdd(backupData.activities);
-                await db.photos.bulkAdd(backupData.photos);
-                await db.edits.bulkAdd(backupData.edits);
-                await db.settings.bulkAdd(backupData.settings);
-                
-                alert('Backup restaurado com sucesso!');
-                
-                // Recarregar dados
-                await loadActivities();
-                await loadSettings();
-                updateDashboard();
-                
-            } catch (error) {
-                console.error('Erro ao restaurar backup:', error);
-                alert('Erro ao restaurar backup. O arquivo pode estar corrompido.');
-            }
-        }
-
-        // Exportar JSON
-        async function exportJSON() {
-            try {
-                const activities = await db.activities.toArray();
-                const jsonData = JSON.stringify(activities, null, 2);
-                
-                const blob = new Blob([jsonData], { type: 'application/json' });
-                const link = document.createElement('a');
-                const url = URL.createObjectURL(blob);
-                
-                link.setAttribute('href', url);
-                link.setAttribute('download', `atividades_${new Date().toISOString().slice(0, 10)}.json`);
-                link.style.visibility = 'hidden';
-                
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-                
-            } catch (error) {
-                console.error('Erro ao exportar JSON:', error);
-                alert('Erro ao exportar dados.');
-            }
-        }
-
-        // Disparar importação de JSON
-        function triggerJSONImport() {
-            document.getElementById('importFile').click();
-        }
-
-        // Importar JSON
-        async function importJSON(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-            
-            if (!confirm('Importar atividades deste arquivo?')) {
-                return;
-            }
-            
-            try {
-                const reader = new FileReader();
-                reader.onload = async function(e) {
-                    try {
-                        const activities = JSON.parse(e.target.result);
+                zip.loadAsync(e.target.result)
+                    .then(function(contents) {
+                        // Find and read the backup.json file
+                        const backupFile = contents.file("backup.json");
                         
-                        if (!Array.isArray(activities)) {
-                            throw new Error('Formato de arquivo inválido.');
+                        if (!backupFile) {
+                            throw new Error("Arquivo de backup não encontrado no ZIP.");
                         }
                         
-                        // Adicionar atividades ao banco de dados
-                        await db.activities.bulkAdd(activities);
+                        return backupFile.async("text");
+                    })
+                    .then(function(jsonData) {
+                        const backupData = JSON.parse(jsonData);
                         
-                        alert(`${activities.length} atividades importadas com sucesso!`);
+                        // Restore data
+                        activities = backupData.activities || [];
+                        config = backupData.config || {};
                         
-                        // Recarregar dados
-                        await loadActivities();
-                        updateDashboard();
+                        // Save to localStorage
+                        localStorage.setItem('activities', JSON.stringify(activities));
+                        localStorage.setItem('config', JSON.stringify(config));
                         
-                    } catch (error) {
-                        console.error('Erro ao importar JSON:', error);
-                        alert('Erro ao importar dados. Verifique o formato do arquivo.');
-                    }
-                };
-                reader.readAsText(file);
+                        // Update UI
+                        init();
+                        
+                        showToast('Backup restaurado com sucesso!');
+                    })
+                    .catch(function(error) {
+                        console.error('Error restoring backup:', error);
+                        showToast('Erro ao restaurar backup: ' + error.message);
+                    });
+            };
+            
+            reader.readAsArrayBuffer(file);
+        }
+
+        // Clear all data
+        function clearAllData() {
+            if (confirm('Tem certeza que deseja limpar todos os dados? Esta ação não pode ser desfeita.')) {
+                localStorage.removeItem('activities');
+                localStorage.removeItem('config');
                 
-            } catch (error) {
-                console.error('Erro ao importar JSON:', error);
-                alert('Erro ao importar dados.');
+                activities = [];
+                config = {};
+                
+                init();
+                
+                showToast('Todos os dados foram removidos.');
             }
         }
 
-        // Salvar configurações
-        async function saveSettings() {
-            try {
-                const userName = document.getElementById('userName').value;
-                const pinCode = document.getElementById('pinCode').value;
-                const darkMode = document.getElementById('darkModeToggle').checked;
-                const autoBackup = document.getElementById('autoBackupToggle').checked;
-                
-                // Validar PIN
-                if (pinCode && !/^\d{4}$/.test(pinCode)) {
-                    alert('O PIN deve conter exatamente 4 dígitos.');
-                    return;
-                }
-                
-                // Salvar configurações
-                await db.settings.put({ key: 'userName', value: userName });
-                await db.settings.put({ key: 'pinCode', value: pinCode });
-                await db.settings.put({ key: 'darkMode', value: darkMode });
-                await db.settings.put({ key: 'autoBackup', value: autoBackup });
-                
-                // Atualizar estado da aplicação
-                appState.settings.userName = userName;
-                appState.settings.pinCode = pinCode;
-                appState.settings.darkMode = darkMode;
-                appState.settings.autoBackup = autoBackup;
-                
-                alert('Configurações salvas com sucesso!');
-                
-            } catch (error) {
-                console.error('Erro ao salvar configurações:', error);
-                alert('Erro ao salvar configurações.');
-            }
+        // Show toast notification
+        function showToast(message, type = 'success') {
+            // Remove existing toasts
+            const existingToasts = document.querySelectorAll('.toast');
+            existingToasts.forEach(toast => toast.remove());
+            
+            // Create toast element
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            
+            // Set icon based on type
+            let icon = 'check-circle';
+            if (type === 'error') icon = 'exclamation-circle';
+            if (type === 'warning') icon = 'exclamation-triangle';
+            
+            toast.innerHTML = `<i class="fas fa-${icon}"></i> ${message}`;
+            
+            // Add to DOM
+            document.body.appendChild(toast);
+            
+            // Remove after 3 seconds
+            setTimeout(() => {
+                toast.classList.add('hide');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
         }
 
-        // Alternar modo escuro
-        function toggleDarkMode() {
-            const darkMode = document.getElementById('darkModeToggle').checked;
-            
-            if (darkMode) {
-                document.body.classList.add('dark-mode');
-            } else {
-                document.body.classList.remove('dark-mode');
-            }
-            
-            // Salvar configuração
-            db.settings.put({ key: 'darkMode', value: darkMode });
-            appState.settings.darkMode = darkMode;
-        }
-
-        // Limpar todos os dados
-        async function clearAllData() {
-            if (!confirm('ATENÇÃO: Esta ação apagará TODOS os dados. Não é possível desfazer. Continuar?')) {
-                return;
-            }
-            
-            try {
-                await db.activities.clear();
-                await db.photos.clear();
-                await db.edits.clear();
-                
-                alert('Todos os dados foram apagados.');
-                
-                // Recarregar
-                await loadActivities();
-                updateDashboard();
-                
-            } catch (error) {
-                console.error('Erro ao apagar dados:', error);
-                alert('Erro ao apagar dados.');
-            }
-        }
+        // Initialize the app
+        init();
     </script>
 </body>
 </html>
