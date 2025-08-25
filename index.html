@@ -2475,38 +2475,37 @@
 
         // Function to create image with timestamp
         // Function to create image with timestamp (improved)
-        function createImageWithTimestamp(imageData, timestamp) {
-            return new Promise((resolve) => {
-                const img = new Image();
-                img.onload = function () {
-                    const canvas = document.createElement('canvas');
-                    canvas.width = img.width;
-                    canvas.height = img.height;
-                    const ctx = canvas.getContext('2d');
-
-                    // Draw the original image
-                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-
-                    // Add timestamp background for better readability
-                    const text = timestamp;
-                    const textWidth = ctx.measureText(text).width;
-
-                    ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
-                    ctx.fillRect(canvas.width - textWidth - 20, canvas.height - 30, textWidth + 10, 20);
-
-                    // Add timestamp text
-                    ctx.font = '14px Arial';
-                    ctx.fillStyle = 'white';
-                    ctx.textAlign = 'right';
-                    ctx.textBaseline = 'bottom';
-                    ctx.fillText(text, canvas.width - 15, canvas.height - 15);
-
-                    // Convert to data URL
-                    resolve(canvas.toDataURL('image/jpeg', 0.8));
-                };
-                img.src = imageData;
-            });
-        }
+        // Function to create image with timestamp (improved visibility)
+function createImageWithTimestamp(imageData, timestamp) {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = function() {
+      // Create canvas with extra space for timestamp
+      const canvas = document.createElement('canvas');
+      canvas.width = img.width;
+      canvas.height = img.height + 40; // Extra space for timestamp
+      const ctx = canvas.getContext('2d');
+      
+      // Draw the original image
+      ctx.drawImage(img, 0, 0, img.width, img.height);
+      
+      // Add background for timestamp
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+      ctx.fillRect(0, img.height, img.width, 40);
+      
+      // Add timestamp text (white with larger font)
+      ctx.font = 'bold 20px Arial';
+      ctx.fillStyle = 'white';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(timestamp, img.width / 2, img.height + 20);
+      
+      // Convert to data URL
+      resolve(canvas.toDataURL('image/jpeg', 0.9));
+    };
+    img.src = imageData;
+  });
+}
 
         // Create backup
         function createBackup() {
