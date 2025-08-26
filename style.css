@@ -772,6 +772,7 @@ textarea {
     .container {
         max-width: 1200px;
     }
+    
 }
 
 /* Animation for toast messages */
@@ -921,7 +922,36 @@ textarea {
     font-size: 0.9rem;
     color: #7f8c8d;
 }
+/* ============================================== */
+#generateReport{
+    width: 250px;
+    background: #E14434;
+}
+#generateReport:hover{
+    
+    background: #EA5B6F;
+}
 
+.add-reg{
+   height: 70px;
+   width: 250px;
+   display: flex;
+   justify-content: center;
+   align-items: center;
+}
+.add-reg-ico{
+    padding: 0;
+    margin: 3px;
+    
+}
+/* .card-filtro {
+    display: flex;
+    flex-wrap: wrap;
+}
+/* .report-filters{
+    display: flex;
+    flex-direction: column;
+} */ */
 .card01 {
     background: #4379F2;
 
@@ -940,4 +970,236 @@ textarea {
 }
 .stat-label, .stat-value{
     color: #f4f9fc;
+}
+
+/* Adicione estas regras CSS ao final do seu arquivo style.css */
+
+/* Responsividade para tabelas */
+.data-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 20px;
+    display: block;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+.data-table table {
+    width: 100%;
+    min-width: 600px; /* Largura mínima para manter a legibilidade */
+}
+
+.data-table th,
+.data-table td {
+    padding: 12px 15px;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+    white-space: nowrap;
+}
+
+.data-table th {
+    background-color: #f8f9fa;
+    font-weight: 600;
+    color: var(--dark-color);
+    position: sticky;
+    top: 0;
+}
+
+/* Ajustes específicos para a tabela de atividades */
+#activitiesTable {
+    width: 100%;
+}
+
+#activitiesTable th:nth-child(1),
+#activitiesTable td:nth-child(1) {
+    min-width: 140px;
+}
+
+#activitiesTable th:nth-child(2),
+#activitiesTable td:nth-child(2) {
+    min-width: 120px;
+}
+
+#activitiesTable th:nth-child(3),
+#activitiesTable td:nth-child(3),
+#activitiesTable th:nth-child(4),
+#activitiesTable td:nth-child(4) {
+    min-width: 100px;
+    text-align: center;
+}
+
+#activitiesTable th:nth-child(5),
+#activitiesTable td:nth-child(5) {
+    min-width: 150px;
+}
+
+#activitiesTable th:nth-child(6),
+#activitiesTable td:nth-child(6) {
+    min-width: 100px;
+    text-align: center;
+}
+
+/* Ajustes para a visualização de relatórios */
+#reportPreview {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+#reportPreview .data-table {
+    min-width: 600px;
+}
+
+/* Melhorias para dispositivos móveis */
+@media (max-width: 768px) {
+    .data-table {
+        border-radius: 8px;
+        border: 1px solid #eee;
+    }
+    
+    .data-table th,
+    .data-table td {
+        padding: 10px 12px;
+        font-size: 14px;
+    }
+    
+    /* Ajustes específicos para mobile */
+    #activitiesTable th:nth-child(1),
+    #activitiesTable td:nth-child(1) {
+        min-width: 120px;
+    }
+    
+    #activitiesTable th:nth-child(5),
+    #activitiesTable td:nth-child(5) {
+        min-width: 120px;
+    }
+}
+
+/* Estilização da barra de scroll para tabelas */
+.data-table::-webkit-scrollbar {
+    height: 8px;
+}
+
+.data-table::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+}
+
+.data-table::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 4px;
+}
+
+.data-table::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+}
+
+/* Ajuste para garantir que o container da tabela não quebre o layout */
+.card:has(.data-table) {
+    overflow: hidden;
+}
+
+/* Melhoria visual para indicar que a tabela é scrollable */
+.data-table-wrapper {
+    position: relative;
+}
+
+.data-table-wrapper::after {
+    content: '';
+    position: absolute;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    width: 20px;
+    background: linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,1) 100%);
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.data-table-wrapper.scrollable::after {
+    opacity: 1;
+}
+
+/* Adicione estas regras CSS ao final do seu arquivo style.css */
+
+/* Melhorias de responsividade para os filtros de relatório */
+.card-filtro .report-filters {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.card-filtro .form-group {
+    margin-bottom: 15px;
+    min-width: 0; /* Permite que os itens encolham adequadamente */
+}
+
+/* Ajustes específicos para mobile */
+@media (max-width: 768px) {
+    .card-filtro .report-filters {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+    
+    .card-filtro .form-group {
+        margin-bottom: 12px;
+    }
+    
+    /* Garante que os inputs não fiquem muito pequenos */
+    .card-filtro input,
+    .card-filtro select {
+        min-height: 44px; /* Tamanho mínimo para toque em dispositivos móveis */
+    }
+    
+    /* Ajusta o botão de gerar relatório */
+    #generateReport {
+        width: 100%;
+        margin: 8px 0;
+    }
+}
+
+/* Ajustes para telas muito pequenas */
+@media (max-width: 480px) {
+    .card-filtro {
+        padding: 15px;
+    }
+    
+    .card-filtro .report-filters {
+        gap: 10px;
+    }
+    
+    .card-filtro h3 {
+        font-size: 1.1rem;
+        margin-bottom: 12px;
+    }
+    
+    .card-filtro label {
+        font-size: 14px;
+        margin-bottom: 6px;
+    }
+}
+
+/* Melhoria visual para os grupos de formulário em filtros */
+.card-filtro .form-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.card-filtro label {
+    margin-bottom: 8px;
+    font-weight: 500;
+}
+
+/* Garante que os inputs mantenham proporção adequada */
+.card-filtro input,
+.card-filtro select {
+    flex: 1;
+    min-width: 0; /* Permite que encolham adequadamente */
+}
+
+/* Ajuste específico para o período personalizado */
+#customDateRange,
+#customDateRangeEnd {
+    margin-bottom: 15px;
 }
