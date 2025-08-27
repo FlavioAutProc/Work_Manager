@@ -456,13 +456,15 @@ textarea {
 }
 
 .stat-card {
-    background: #4379F2;
+    background: #6f86b8;
     border-radius: 10px;
     padding: 20px;
     text-align: center;
     box-shadow: var(--shadow-sm);
     transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
+
+
 
 .stat-card:hover {
     transform: translateY(-3px);
@@ -1359,5 +1361,20 @@ textarea {
     
     .report-summary .stats-grid {
         grid-template-columns: 1fr !important;
+    }
+}
+
+/* Garantir que o container do gráfico tenha altura fixa */
+.chart-container {
+    height: 250px;
+    min-height: 250px;
+    position: relative;
+}
+
+/* Melhorar a visualização do gráfico em mobile */
+@media (max-width: 768px) {
+    .chart-container {
+        height: 200px;
+        min-height: 200px;
     }
 }

@@ -83,6 +83,13 @@ async function init() {
     // Update dashboard
     updateDashboard();
 
+    // Forçar redimensionamento do gráfico após um pequeno delay
+        setTimeout(() => {
+            if (window.productionChartInstance) {
+                window.productionChartInstance.resize();
+            }
+        }, 500);
+
     // Set up event listeners
     setupEventListeners();
 
@@ -1069,86 +1076,109 @@ function updateDashboard() {
 }
 
 // Update production chart (mantido igual)
+// Update production chart (corrigido)
 function updateProductionChart() {
-  const ctx = document.getElementById("productionChart").getContext("2d");
-
-  // Group activities by date
-  const activitiesByDate = {};
-
-  activities.forEach((activity) => {
-    const date = new Date(activity.date).toLocaleDateString("pt-BR");
-
-    if (!activitiesByDate[date]) {
-      activitiesByDate[date] = {
-        production: 0,
-        loss: 0,
-      };
+    const ctx = document.getElementById("productionChart");
+    
+    // Verificar se o canvas existe
+    if (!ctx) {
+        console.error("Canvas do gráfico não encontrado");
+        return;
+    }
+    
+    const chartCtx = ctx.getContext("2d");
+    
+    // Destruir gráfico existente se houver
+    if (window.productionChartInstance) {
+        window.productionChartInstance.destroy();
     }
 
-    activitiesByDate[date].production += activity.production;
-    activitiesByDate[date].loss += activity.loss;
-  });
+    // Group activities by date (corrigido para agrupar por dia)
+    const activitiesByDate = {};
 
-  // Get last 7 days
-  const dates = [];
-  const productionData = [];
-  const lossData = [];
+    activities.forEach((activity) => {
+        // Usar apenas a data (sem hora) para agrupamento
+        const dateObj = new Date(activity.date);
+        const dateKey = dateObj.toLocaleDateString("pt-BR");
+        
+        if (!activitiesByDate[dateKey]) {
+            activitiesByDate[dateKey] = {
+                production: 0,
+                loss: 0,
+                date: dateObj // Manter o objeto Date para ordenação
+            };
+        }
 
-  for (let i = 6; i >= 0; i--) {
-    const date = new Date();
-    date.setDate(date.getDate() - i);
-    const dateString = date.toLocaleDateString("pt-BR");
-
-    dates.push(dateString);
-
-    if (activitiesByDate[dateString]) {
-      productionData.push(activitiesByDate[dateString].production);
-      lossData.push(activitiesByDate[dateString].loss);
-    } else {
-      productionData.push(0);
-      lossData.push(0);
-    }
-  }
-
-  // Create or update chart
-  if (window.productionChartInstance) {
-    window.productionChartInstance.data.labels = dates;
-    window.productionChartInstance.data.datasets[0].data = productionData;
-    window.productionChartInstance.data.datasets[1].data = lossData;
-    window.productionChartInstance.update();
-  } else {
-    window.productionChartInstance = new Chart(ctx, {
-      type: "bar",
-      data: {
-        labels: dates,
-        datasets: [
-          {
-            label: "Produção",
-            data: productionData,
-            backgroundColor: "rgba(46, 204, 113, 0.7)",
-            borderColor: "rgba(46, 204, 113, 1)",
-            borderWidth: 1,
-          },
-          {
-            label: "Perdas",
-            data: lossData,
-            backgroundColor: "rgba(231, 76, 60, 0.7)",
-            borderColor: "rgba(231, 76, 60, 1)",
-            borderWidth: 1,
-          },
-        ],
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        scales: {
-          y: {
-            beginAtZero: true,
-          },
-        },
-      },
+        activitiesByDate[dateKey].production += activity.production;
+        activitiesByDate[dateKey].loss += activity.loss;
     });
-  }
+
+    // Ordenar datas cronologicamente
+    const sortedDates = Object.keys(activitiesByDate).sort((a, b) => {
+        return new Date(activitiesByDate[a].date) - new Date(activitiesByDate[b].date);
+    });
+
+    // Pegar os últimos 7 dias ou todos os dias disponíveis
+    const displayDates = sortedDates.slice(-7);
+    
+    const productionData = [];
+    const lossData = [];
+
+    displayDates.forEach(date => {
+        productionData.push(activitiesByDate[date].production);
+        lossData.push(activitiesByDate[date].loss);
+    });
+
+    // Criar o gráfico
+    window.productionChartInstance = new Chart(chartCtx, {
+        type: "bar",
+        data: {
+            labels: displayDates,
+            datasets: [
+                {
+                    label: "Produção",
+                    data: productionData,
+                    backgroundColor: "rgba(46, 204, 113, 0.7)",
+                    borderColor: "rgba(46, 204, 113, 1)",
+                    borderWidth: 1,
+                },
+                {
+                    label: "Perdas",
+                    data: lossData,
+                    backgroundColor: "rgba(231, 76, 60, 0.7)",
+                    borderColor: "rgba(231, 76, 60, 1)",
+                    borderWidth: 1,
+                },
+            ],
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        precision: 0 // Sem casas decimais
+                    }
+                },
+                x: {
+                    ticks: {
+                        maxRotation: 45,
+                        minRotation: 45
+                    }
+                }
+            },
+            plugins: {
+                legend: {
+                    position: 'top',
+                },
+                title: {
+                    display: true,
+                    text: 'Produção vs Perdas (Últimos 7 dias)'
+                }
+            }
+        },
+    });
 }
 
 // Generate report (modificado para IndexedDB)
@@ -1335,13 +1365,38 @@ function updateReportPreview(activities, startDate, endDate) {
     });
 }
 
-// Export to PDF function
+// Export to PDF function (com informações detalhadas nas imagens)
 async function exportToPdf(activities, startDate, endDate) {
     try {
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF();
+        
+        // Configurações de estilo
+        const primaryColor = [52, 152, 219];
+        const secondaryColor = [44, 62, 80];
+        const lightGray = [245, 245, 245];
+        const darkGray = [128, 128, 128];
+        
+        // Função para formatar data corretamente
+        const formatDateCorrectly = (dateString) => {
+            const date = new Date(dateString);
+            const localDate = new Date(date.getTime() - (date.getTimezoneOffset() * 60000));
+            return localDate.toLocaleDateString("pt-BR");
+        };
 
-        // Calculate stats
+        // Função para formatar data e hora corretamente
+        const formatDateTimeCorrectly = (dateString) => {
+            const date = new Date(dateString);
+            const localDate = new Date(date.getTime() - (date.getTimezoneOffset() * 60000));
+            const formattedDate = localDate.toLocaleDateString("pt-BR");
+            const formattedTime = localDate.toLocaleTimeString("pt-BR", {
+                hour: "2-digit",
+                minute: "2-digit"
+            });
+            return `${formattedDate} ${formattedTime}`;
+        };
+
+        // Calcular estatísticas
         const totalProduction = activities.reduce(
             (sum, activity) => sum + activity.production,
             0
@@ -1354,192 +1409,292 @@ async function exportToPdf(activities, startDate, endDate) {
             ? (((totalProduction - totalLosses) / totalProduction) * 100).toFixed(1)
             : 0;
 
-        const startDateFormatted = new Date(startDate).toLocaleDateString("pt-BR");
-        const endDateFormatted = new Date(endDate).toLocaleDateString("pt-BR");
-        const reportDate = new Date().toLocaleDateString("pt-BR");
-        const reportTime = new Date().toLocaleTimeString("pt-BR");
+        // Formatar datas
+        const startDateFormatted = formatDateCorrectly(startDate);
+        const endDateFormatted = formatDateCorrectly(endDate);
+        
+        const now = new Date();
+        const reportDate = now.toLocaleDateString("pt-BR");
+        const reportTime = now.toLocaleTimeString("pt-BR");
 
-        // Header
+        // Página 1: Cabeçalho e Resumo
+        // Logo e Cabeçalho
+        doc.setFillColor(...primaryColor);
+        doc.rect(0, 0, 210, 30, 'F');
         doc.setFontSize(20);
-        doc.setTextColor(44, 62, 80);
-        doc.text("Relatório de Produção", 105, 15, { align: "center" });
-
-        // Company Info
-        doc.setFontSize(12);
-        doc.setTextColor(128, 128, 128);
-        doc.text(`Empresa: ${config.company || "Não especificada"}`, 20, 25);
-        doc.text(`Departamento: ${config.department || "Não especificado"}`, 20, 32);
-        doc.text(`Relatório gerado em: ${reportDate} às ${reportTime}`, 20, 39);
-
-        // Period
-        doc.text(`Período: ${startDateFormatted} a ${endDateFormatted}`, 105, 25, { align: "center" });
-
-        // Summary
-        doc.setFontSize(14);
-        doc.setTextColor(44, 62, 80);
-        doc.text("Resumo Estatístico", 20, 55);
-
-        doc.setFontSize(12);
-        doc.setTextColor(0, 0, 0);
-        doc.text(`Total de Produção: ${totalProduction}`, 20, 65);
-        doc.text(`Total de Perdas: ${totalLosses}`, 20, 72);
-        doc.text(`Eficiência: ${efficiency}%`, 20, 79);
-        doc.text(`Total de Atividades: ${activities.length}`, 20, 86);
-
-        // Activities table
-        doc.setFontSize(14);
-        doc.setTextColor(44, 62, 80);
-        doc.text("Detalhes das Atividades", 20, 100);
-
-        // Table headers
-        doc.setFillColor(52, 152, 219);
         doc.setTextColor(255, 255, 255);
-        doc.rect(20, 105, 170, 10, 'F');
-        doc.text("Data/Hora", 25, 111);
-        doc.text("Tipo", 60, 111);
-        doc.text("Produção", 95, 111);
-        doc.text("Perdas", 125, 111);
-        doc.text("Colaborador", 150, 111);
-
-        // Table content
+        doc.text("RELATÓRIO DE PRODUÇÃO", 105, 17, { align: "center" });
+        
+        // Informações da empresa
         doc.setFontSize(10);
-        doc.setTextColor(0, 0, 0);
-        let yPosition = 115;
-        let page = 1;
+        doc.setTextColor(...darkGray);
+        doc.text(`Empresa: ${config.company || "Não especificada"}`, 20, 45);
+        doc.text(`Departamento: ${config.department || "Não especificado"}`, 20, 50);
+        doc.text(`Relatório gerado em: ${reportDate} às ${reportTime}`, 20, 55);
+        doc.text(`Período: ${startDateFormatted} a ${endDateFormatted}`, 105, 45, { align: "center" });
+        doc.text(`Colaborador: ${config.employeeName || "Não especificado"}`, 105, 50, { align: "center" });
 
+        // Linha divisória
+        doc.setDrawColor(...primaryColor);
+        doc.line(20, 60, 190, 60);
+        
+        // Resumo Estatístico
+        doc.setFontSize(16);
+        doc.setTextColor(...secondaryColor);
+        doc.text("RESUMO ESTATÍSTICO", 20, 70);
+        
+        // Caixas de estatísticas
+        const stats = [
+            { label: "TOTAL PRODUZIDO", value: totalProduction, color: [46, 204, 113] },
+            { label: "TOTAL DE PERDAS", value: totalLosses, color: [231, 76, 60] },
+            { label: "EFICIÊNCIA", value: `${efficiency}%`, color: [52, 152, 219] },
+            { label: "ATIVIDADES", value: activities.length, color: [155, 89, 182] }
+        ];
+        
+        let yPosition = 85;
+        stats.forEach((stat, index) => {
+            const xPosition = 20 + (index % 2) * 95;
+            
+            if (index % 2 === 0 && index !== 0) {
+                yPosition += 45;
+            }
+            
+            doc.setFillColor(...stat.color);
+            doc.roundedRect(xPosition, yPosition, 85, 35, 3, 3, 'F');
+            doc.setTextColor(255, 255, 255);
+            doc.setFontSize(10);
+            doc.text(stat.label, xPosition + 42.5, yPosition + 12, { align: "center" });
+            doc.setFontSize(16);
+            doc.setFont(undefined, 'bold');
+            doc.text(stat.value.toString(), xPosition + 42.5, yPosition + 25, { align: "center" });
+            doc.setFont(undefined, 'normal');
+        });
+        
+        yPosition += 50;
+
+        // Detalhes das atividades
+        if (yPosition > 200) {
+            doc.addPage();
+            yPosition = 20;
+        }
+        
+        doc.setFontSize(16);
+        doc.setTextColor(...secondaryColor);
+        doc.text("DETALHES DAS ATIVIDADES", 20, yPosition);
+        yPosition += 10;
+        
+        // Cabeçalho da tabela
+        doc.setFillColor(...primaryColor);
+        doc.rect(20, yPosition, 170, 10, 'F');
+        doc.setTextColor(255, 255, 255);
+        doc.setFontSize(10);
+        doc.text("Data/Hora", 30, yPosition + 7);
+        doc.text("Tipo", 65, yPosition + 7);
+        doc.text("Produção", 100, yPosition + 7);
+        doc.text("Perdas", 130, yPosition + 7);
+        doc.text("Colaborador", 160, yPosition + 7);
+        
+        yPosition += 10;
+        
+        // Conteúdo da tabela
+        doc.setFontSize(9);
+        let page = 1;
+        let hasImages = false;
+        
         activities.forEach((activity, index) => {
-            // Add new page if needed
+            // Verificar se há imagens para exportar
+            if (activity.photos && activity.photos.length > 0) {
+                hasImages = true;
+            }
+            
+            // Nova página se necessário
             if (yPosition > 270 && index < activities.length - 1) {
                 doc.addPage();
                 yPosition = 20;
                 page++;
                 
-                // Add header to new page
+                // Cabeçalho da nova página
                 doc.setFontSize(10);
-                doc.setTextColor(128, 128, 128);
+                doc.setTextColor(...darkGray);
                 doc.text(`Página ${page} - Relatório de Produção - ${config.company || "Não especificada"}`, 105, 10, { align: "center" });
                 doc.setDrawColor(200, 200, 200);
                 doc.line(20, 15, 190, 15);
                 
-                // Table headers for new page
-                doc.setFillColor(52, 152, 219);
+                // Cabeçalho da tabela para nova página
+                doc.setFillColor(...primaryColor);
+                doc.rect(20, yPosition, 170, 10, 'F');
                 doc.setTextColor(255, 255, 255);
-                doc.rect(20, 20, 170, 10, 'F');
-                doc.text("Data/Hora", 25, 26);
-                doc.text("Tipo", 60, 26);
-                doc.text("Produção", 95, 26);
-                doc.text("Perdas", 125, 26);
-                doc.text("Colaborador", 150, 26);
+                doc.text("Data/Hora", 30, yPosition + 7);
+                doc.text("Tipo", 65, yPosition + 7);
+                doc.text("Produção", 100, yPosition + 7);
+                doc.text("Perdas", 130, yPosition + 7);
+                doc.text("Colaborador", 160, yPosition + 7);
                 
-                yPosition = 30;
+                yPosition += 10;
             }
-
-            const date = new Date(activity.date);
-            const formattedDate = date.toLocaleDateString("pt-BR");
-            const formattedTime = date.toLocaleTimeString("pt-BR", {
-                hour: "2-digit",
-                minute: "2-digit"
-            });
-
-            // Alternate row colors
+            
+            // Formatar data/hora
+            const formattedDateTime = formatDateTimeCorrectly(activity.date);
+            
+            // Cores alternadas para linhas
             if (index % 2 === 0) {
-                doc.setFillColor(245, 245, 245);
-                doc.rect(20, yPosition - 4, 170, 6, 'F');
+                doc.setFillColor(...lightGray);
+                doc.rect(20, yPosition, 170, 6, 'F');
             }
-
+            
             doc.setTextColor(0, 0, 0);
-            doc.text(`${formattedDate} ${formattedTime}`, 25, yPosition);
-            doc.text(activity.type, 60, yPosition);
-            doc.text(activity.production.toString(), 95, yPosition);
-            doc.text(activity.loss > 0 ? activity.loss.toString() : '-', 125, yPosition);
-            doc.text(activity.employee, 150, yPosition);
-
+            doc.text(formattedDateTime, 25, yPosition + 4);
+            doc.text(activity.type, 65, yPosition + 4);
+            doc.text(activity.production.toString(), 100, yPosition + 4);
+            doc.text(activity.loss > 0 ? activity.loss.toString() : '-', 130, yPosition + 4);
+            doc.text(activity.employee, 160, yPosition + 4);
+            
             yPosition += 6;
         });
-
-        // Check if there are photos to include
-        const activitiesWithPhotos = activities.filter(activity => 
-            activity.photos && activity.photos.length > 0
-        );
-
-        if (activitiesWithPhotos.length > 0) {
-            // Add photos page
+        
+        // Página de imagens (se houver)
+        if (hasImages) {
             doc.addPage();
-            doc.setFontSize(14);
-            doc.setTextColor(44, 62, 80);
-            doc.text("Registros Fotográficos", 105, 20, { align: "center" });
+            doc.setFontSize(16);
+            doc.setTextColor(...secondaryColor);
+            doc.text("REGISTROS FOTOGRÁFICOS", 105, 20, { align: "center" });
             
-            let photoYPosition = 30;
-            let photoPage = page + 1;
+            let imgYPosition = 30;
+            let imgCount = 0;
             
-            for (const activity of activitiesWithPhotos) {
-                const date = new Date(activity.date);
-                const formattedDate = date.toLocaleDateString("pt-BR");
-                const formattedTime = date.toLocaleTimeString("pt-BR");
-                
-                for (let i = 0; i < activity.photos.length; i++) {
-                    // Check if we need a new page
-                    if (photoYPosition > 200) {
-                        doc.addPage();
-                        photoYPosition = 20;
-                        photoPage++;
+            activities.forEach((activity, activityIndex) => {
+                if (activity.photos && activity.photos.length > 0) {
+                    activity.photos.forEach((photo, photoIndex) => {
+                        // Nova página se necessário
+                        if (imgYPosition > 220) {
+                            doc.addPage();
+                            imgYPosition = 20;
+                            doc.setFontSize(16);
+                            doc.setTextColor(...secondaryColor);
+                            doc.text("REGISTROS FOTOGRÁFICOS (CONT.)", 105, 15, { align: "center" });
+                            imgYPosition = 25;
+                        }
                         
-                        // Add header to new page
-                        doc.setFontSize(10);
-                        doc.setTextColor(128, 128, 128);
-                        doc.text(`Página ${photoPage} - Registros Fotográficos - ${config.company || "Não especificada"}`, 105, 10, { align: "center" });
-                    }
-                    
-                    // Add photo metadata
-                    doc.setFontSize(12);
-                    doc.setTextColor(44, 62, 80);
-                    doc.text(`Atividade: ${activity.type}`, 20, photoYPosition);
-                    doc.text(`Data: ${formattedDate} ${formattedTime}`, 20, photoYPosition + 7);
-                    doc.text(`Colaborador: ${activity.employee}`, 20, photoYPosition + 14);
-                    
-                    if (activity.notes) {
-                        doc.setFontSize(10);
-                        doc.text(`Observações: ${activity.notes}`, 20, photoYPosition + 21);
-                    }
-                    
-                    // Add photo
-                    try {
-                        // Add image with reduced quality to keep file size manageable
-                        doc.addImage(
-                            activity.photos[i], 
-                            'JPEG', 
-                            20, 
-                            photoYPosition + 25, 
-                            170, 
-                            100
-                        );
-                    } catch (error) {
-                        console.error("Error adding image to PDF:", error);
-                        doc.setFontSize(10);
-                        doc.setTextColor(255, 0, 0);
-                        doc.text("Erro ao carregar imagem", 20, photoYPosition + 25);
-                    }
-                    
-                    photoYPosition += 140;
-                    
-                    // Add separation between photos
-                    if (i < activity.photos.length - 1) {
-                        doc.setDrawColor(200, 200, 200);
-                        doc.line(20, photoYPosition, 190, photoYPosition);
-                        photoYPosition += 10;
-                    }
+                        // Adicionar título da imagem
+                        const formattedDateTime = formatDateTimeCorrectly(activity.date);
+                        const imgTitle = `Registro Fotográfico - ${formattedDateTime}`;
+                        doc.setFontSize(12);
+                        doc.setTextColor(...secondaryColor);
+                        doc.text(imgTitle, 20, imgYPosition);
+                        imgYPosition += 7;
+                        
+                        // Adicionar informações detalhadas da atividade
+                        doc.setFontSize(9);
+                        doc.setTextColor(0, 0, 0);
+                        
+                        // Data e Hora
+                        doc.text(`Data e Hora: ${formattedDateTime}`, 20, imgYPosition);
+                        imgYPosition += 5;
+                        
+                        // Tipo de Atividade
+                        doc.text(`Tipo de Atividade: ${activity.type}`, 20, imgYPosition);
+                        imgYPosition += 5;
+                        
+                        // Quantidade Produzida
+                        doc.text(`Quantidade Produzida: ${activity.production}`, 20, imgYPosition);
+                        imgYPosition += 5;
+                        
+                        // Quantidade de Perda
+                        const perdaText = activity.loss > 0 
+                            ? `${activity.loss} (${activity.lossType || "Tipo não especificado"})`
+                            : "Nenhuma perda";
+                        doc.text(`Quantidade de Perda: ${perdaText}`, 20, imgYPosition);
+                        imgYPosition += 5;
+                        
+                        // Colaborador
+                        doc.text(`Colaborador: ${activity.employee}`, 20, imgYPosition);
+                        imgYPosition += 5;
+                        
+                        // Observações (se houver)
+                        if (activity.notes && activity.notes.trim() !== "") {
+                            // Quebrar observações em linhas se for muito longo
+                            const maxLineLength = 60;
+                            let notes = activity.notes;
+                            let notesLines = [];
+                            
+                            while (notes.length > maxLineLength) {
+                                let breakPoint = notes.lastIndexOf(' ', maxLineLength);
+                                if (breakPoint === -1) breakPoint = maxLineLength;
+                                notesLines.push(notes.substring(0, breakPoint));
+                                notes = notes.substring(breakPoint + 1);
+                            }
+                            notesLines.push(notes);
+                            
+                            doc.text("Observações:", 20, imgYPosition);
+                            imgYPosition += 4;
+                            
+                            notesLines.forEach(line => {
+                                if (imgYPosition > 270) {
+                                    doc.addPage();
+                                    imgYPosition = 20;
+                                }
+                                doc.text(`- ${line}`, 25, imgYPosition);
+                                imgYPosition += 4;
+                            });
+                        }
+                        
+                        imgYPosition += 3;
+                        
+                        // Adicionar imagem
+                        try {
+                            // Adicionar imagem (tentativa com dimensionamento adequado)
+                            const imgProps = doc.getImageProperties(photo);
+                            const width = 100;
+                            const height = (imgProps.height * width) / imgProps.width;
+                            
+                            if (height > 100) {
+                                // Se a imagem for muito alta, ajustar para caber
+                                const adjustedHeight = 100;
+                                const adjustedWidth = (imgProps.width * adjustedHeight) / imgProps.height;
+                                doc.addImage(photo, 'JPEG', 20, imgYPosition, adjustedWidth, adjustedHeight);
+                                imgYPosition += adjustedHeight + 10;
+                            } else {
+                                doc.addImage(photo, 'JPEG', 20, imgYPosition, width, height);
+                                imgYPosition += height + 10;
+                            }
+                            
+                            // Data de registro da imagem (usando a data da atividade)
+                            doc.setFontSize(8);
+                            doc.setTextColor(...darkGray);
+                            doc.text(`Registrado em: ${formattedDateTime}`, 20, imgYPosition);
+                            imgYPosition += 5;
+                            
+                            imgCount++;
+                            
+                            // Linha divisória entre imagens
+                            if (imgCount < getTotalImages(activities)) {
+                                doc.setDrawColor(200, 200, 200);
+                                doc.line(20, imgYPosition, 190, imgYPosition);
+                                imgYPosition += 10;
+                            }
+                        } catch (error) {
+                            console.error("Erro ao adicionar imagem:", error);
+                            doc.setFontSize(10);
+                            doc.setTextColor(231, 76, 60);
+                            doc.text("Erro ao carregar imagem", 20, imgYPosition);
+                            imgYPosition += 20;
+                        }
+                    });
                 }
-                
-                // Add separation between activities
-                if (activitiesWithPhotos.indexOf(activity) < activitiesWithPhotos.length - 1) {
-                    doc.setDrawColor(200, 200, 200);
-                    doc.line(20, photoYPosition, 190, photoYPosition);
-                    photoYPosition += 10;
-                }
-            }
+            });
+        }
+        
+        // Rodapé em todas as páginas
+        const pageCount = doc.internal.getNumberOfPages();
+        for (let i = 1; i <= pageCount; i++) {
+            doc.setPage(i);
+            doc.setFontSize(8);
+            doc.setTextColor(...darkGray);
+            doc.text(`Página ${i} de ${pageCount}`, 105, 285, { align: "center" });
+            doc.text(`Work Manager Profissional - ${reportDate}`, 105, 290, { align: "center" });
         }
 
-        // Save PDF
+        // Salvar PDF
         const fileName = `relatorio_producao_${new Date().toISOString().slice(0, 10)}.pdf`;
         doc.save(fileName);
 
@@ -1549,6 +1704,16 @@ async function exportToPdf(activities, startDate, endDate) {
         showToast("Erro ao exportar PDF: " + error.message, "error");
     }
 }
+
+// Função auxiliar para contar o total de imagens
+function getTotalImages(activities) {
+    return activities.reduce((total, activity) => {
+        return total + (activity.photos ? activity.photos.length : 0);
+    }, 0);
+}
+
+
+
 
 // Create backup (modificado para IndexedDB)
 async function createBackup() {
