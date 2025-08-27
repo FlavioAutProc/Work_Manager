@@ -1365,7 +1365,8 @@ function updateReportPreview(activities, startDate, endDate) {
     });
 }
 
-// Export to PDF function (com informações detalhadas nas imagens)
+
+// Export to PDF function (com informações detalhadas nas imagens e timestamps)
 async function exportToPdf(activities, startDate, endDate) {
     try {
         const { jsPDF } = window.jspdf;
@@ -1394,6 +1395,44 @@ async function exportToPdf(activities, startDate, endDate) {
                 minute: "2-digit"
             });
             return `${formattedDate} ${formattedTime}`;
+        };
+
+        // Função para adicionar timestamp à imagem
+        const addTimestampToImage = (imageData, timestampText) => {
+            return new Promise((resolve) => {
+                const img = new Image();
+                img.onload = function() {
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+                    
+                    // Configurar canvas com as dimensões da imagem
+                    canvas.width = img.width;
+                    canvas.height = img.height;
+                    
+                    // Desenhar a imagem original
+                    ctx.drawImage(img, 0, 0);
+                    
+                    // Configurar estilo para o texto do timestamp
+                    ctx.font = Math.max(16, img.width / 30) + 'px Arial';
+                    ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+                    ctx.strokeStyle = 'rgba(0, 0, 0, 0.7)';
+                    ctx.lineWidth = 3;
+                    ctx.textAlign = 'right';
+                    
+                    // Calcular posição (canto inferior direito)
+                    const x = canvas.width - 15;
+                    const y = canvas.height - 15;
+                    
+                    // Desenhar texto com contorno
+                    ctx.strokeText(timestampText, x, y);
+                    ctx.fillText(timestampText, x, y);
+                    
+                    // Converter para data URL e retornar
+                    resolve(canvas.toDataURL('image/jpeg', 0.9));
+                };
+                
+                img.src = imageData;
+            });
         };
 
         // Calcular estatísticas
@@ -1562,9 +1601,9 @@ async function exportToPdf(activities, startDate, endDate) {
             let imgYPosition = 30;
             let imgCount = 0;
             
-            activities.forEach((activity, activityIndex) => {
+            for (const activity of activities) {
                 if (activity.photos && activity.photos.length > 0) {
-                    activity.photos.forEach((photo, photoIndex) => {
+                    for (const photo of activity.photos) {
                         // Nova página se necessário
                         if (imgYPosition > 220) {
                             doc.addPage();
@@ -1640,10 +1679,13 @@ async function exportToPdf(activities, startDate, endDate) {
                         
                         imgYPosition += 3;
                         
-                        // Adicionar imagem
+                        // Adicionar imagem com timestamp
                         try {
+                            // Adicionar timestamp à imagem
+                            const imageWithTimestamp = await addTimestampToImage(photo, formattedDateTime);
+                            
                             // Adicionar imagem (tentativa com dimensionamento adequado)
-                            const imgProps = doc.getImageProperties(photo);
+                            const imgProps = doc.getImageProperties(imageWithTimestamp);
                             const width = 100;
                             const height = (imgProps.height * width) / imgProps.width;
                             
@@ -1651,10 +1693,10 @@ async function exportToPdf(activities, startDate, endDate) {
                                 // Se a imagem for muito alta, ajustar para caber
                                 const adjustedHeight = 100;
                                 const adjustedWidth = (imgProps.width * adjustedHeight) / imgProps.height;
-                                doc.addImage(photo, 'JPEG', 20, imgYPosition, adjustedWidth, adjustedHeight);
+                                doc.addImage(imageWithTimestamp, 'JPEG', 20, imgYPosition, adjustedWidth, adjustedHeight);
                                 imgYPosition += adjustedHeight + 10;
                             } else {
-                                doc.addImage(photo, 'JPEG', 20, imgYPosition, width, height);
+                                doc.addImage(imageWithTimestamp, 'JPEG', 20, imgYPosition, width, height);
                                 imgYPosition += height + 10;
                             }
                             
@@ -1679,9 +1721,9 @@ async function exportToPdf(activities, startDate, endDate) {
                             doc.text("Erro ao carregar imagem", 20, imgYPosition);
                             imgYPosition += 20;
                         }
-                    });
+                    }
                 }
-            });
+            }
         }
         
         // Rodapé em todas as páginas
@@ -1712,7 +1754,44 @@ function getTotalImages(activities) {
     }, 0);
 }
 
-
+// Adicione esta função no script.js (após a função getTotalImages)
+function addTimestampToImage(imageData, timestampText) {
+    return new Promise((resolve) => {
+        const img = new Image();
+        img.onload = function() {
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            
+            // Configurar canvas com as dimensões da imagem
+            canvas.width = img.width;
+            canvas.height = img.height;
+            
+            // Desenhar a imagem original
+            ctx.drawImage(img, 0, 0);
+            
+            // Configurar estilo para o texto do timestamp
+            ctx.font = '16px Arial';
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.9)';
+            ctx.lineWidth = 3;
+            
+            // Calcular posição (canto inferior direito)
+            const text = timestampText;
+            const textMetrics = ctx.measureText(text);
+            const x = canvas.width - textMetrics.width - 20;
+            const y = canvas.height - 20;
+            
+            // Desenhar contorno e texto
+            ctx.strokeText(text, x, y);
+            ctx.fillText(text, x, y);
+            
+            // Converter para data URL e retornar
+            resolve(canvas.toDataURL('image/jpeg'));
+        };
+        
+        img.src = imageData;
+    });
+}
 
 
 // Create backup (modificado para IndexedDB)
