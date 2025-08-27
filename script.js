@@ -1,4 +1,5 @@
-// DOM Elements
+// script.js código criado pelo DeepSeek Flávio Estrutura mais detalhada:
+// DOM Elements (mantido igual)
 const sidebar = document.getElementById("sidebar");
 const overlay = document.getElementById("overlay");
 const navToggle = document.getElementById("navToggle");
@@ -32,47 +33,449 @@ const photoModalBody = document.getElementById("photoModalBody");
 const closeModalBtns = document.querySelectorAll(".close-modal");
 
 // Global variables
-let activities = JSON.parse(localStorage.getItem("activities")) || [];
-let config = JSON.parse(localStorage.getItem("config")) || {};
+let db = null;
+let activities = [];
+let config = {};
 let stream = null;
 let capturedPhotos = [];
 
+// IndexedDB setup
+const DB_NAME = "WorkManagerDB";
+const DB_VERSION = 1;
+const ACTIVITIES_STORE = "activities";
+const CONFIG_STORE = "config";
+
 // Initialize the application
-function init() {
-  // Set current date and time
-  const now = new Date();
-  const formattedDateTime = now.toISOString().slice(0, 16);
-  document.getElementById("activityDate").value = formattedDateTime;
+async function init() {
+  try {
+    // Initialize IndexedDB
+    await initIndexedDB();
 
-  // Load configuration
-  if (Object.keys(config).length > 0) {
-    document.getElementById("employeeName").value = config.employeeName || "";
-    document.getElementById("company").value = config.company || "";
-    document.getElementById("department").value = config.department || "";
-    document.getElementById("language").value = config.language || "pt-BR";
-    document.getElementById("theme").value = config.theme || "light";
+    // Load data from IndexedDB
+    await loadData();
 
-    // Update user avatar with initials
-    if (config.employeeName) {
-      const names = config.employeeName.split(" ");
-      const initials =
-        names[0].charAt(0) +
-        (names.length > 1 ? names[names.length - 1].charAt(0) : "");
-      document.getElementById("userAvatar").textContent = initials;
+    // Set current date and time
+    const now = new Date();
+    const formattedDateTime = now.toISOString().slice(0, 16);
+    document.getElementById("activityDate").value = formattedDateTime;
+
+    // Update UI with loaded config
+    if (Object.keys(config).length > 0) {
+      document.getElementById("employeeName").value = config.employeeName || "";
+      document.getElementById("company").value = config.company || "";
+      document.getElementById("department").value = config.department || "";
+      document.getElementById("language").value = config.language || "pt-BR";
+      document.getElementById("theme").value = config.theme || "light";
+
+      // Update user avatar with initials
+      if (config.employeeName) {
+        const names = config.employeeName.split(" ");
+        const initials =
+          names[0].charAt(0) +
+          (names.length > 1 ? names[names.length - 1].charAt(0) : "");
+        document.getElementById("userAvatar").textContent = initials;
+      }
     }
+
+    // Load activities table
+    updateActivitiesTable();
+
+    // Update dashboard
+    updateDashboard();
+
+    // Set up event listeners
+    setupEventListeners();
+
+    // Check storage status
+    setTimeout(async () => {
+      const storageUsage = await checkStorageStatus();
+      if (storageUsage > 0.9) {
+        showToast(
+          "Seu armazenamento está quase cheio. Considere fazer backup.",
+          "warning"
+        );
+      }
+    }, 2000);
+  } catch (error) {
+    console.error("Error initializing application:", error);
+    showToast("Erro ao inicializar o aplicativo", "error");
   }
-
-  // Load activities table
-  updateActivitiesTable();
-
-  // Update dashboard
-  updateDashboard();
-
-  // Set up event listeners
-  setupEventListeners();
 }
 
-// Set up event listeners
+// Initialize IndexedDB
+function initIndexedDB() {
+  return new Promise((resolve, reject) => {
+    const request = indexedDB.open(DB_NAME, DB_VERSION);
+
+    request.onerror = (event) => {
+      console.error("IndexedDB error:", event.target.error);
+      reject(event.target.error);
+    };
+
+    request.onsuccess = (event) => {
+      db = event.target.result;
+      resolve(db);
+    };
+
+    request.onupgradeneeded = (event) => {
+      const db = event.target.result;
+
+      // Create activities store if it doesn't exist
+      if (!db.objectStoreNames.contains(ACTIVITIES_STORE)) {
+        const activitiesStore = db.createObjectStore(ACTIVITIES_STORE, {
+          keyPath: "id",
+          autoIncrement: false,
+        });
+        activitiesStore.createIndex("date", "date", { unique: false });
+        activitiesStore.createIndex("type", "type", { unique: false });
+      }
+
+      // Create config store if it doesn't exist
+      if (!db.objectStoreNames.contains(CONFIG_STORE)) {
+        db.createObjectStore(CONFIG_STORE, { keyPath: "id" });
+      }
+    };
+  });
+}
+
+// Load data from IndexedDB
+async function loadData() {
+  try {
+    // Load activities
+    activities = await getAllActivities();
+
+    // Load config
+    const configData = await getConfig();
+    config = configData || {};
+  } catch (error) {
+    console.error("Error loading data:", error);
+    throw error;
+  }
+}
+
+// Get all activities from IndexedDB
+function getAllActivities() {
+  return new Promise((resolve, reject) => {
+    if (!db) {
+      reject(new Error("Database not initialized"));
+      return;
+    }
+
+    const transaction = db.transaction([ACTIVITIES_STORE], "readonly");
+    const store = transaction.objectStore(ACTIVITIES_STORE);
+    const request = store.getAll();
+
+    request.onsuccess = () => {
+      resolve(request.result || []);
+    };
+
+    request.onerror = () => {
+      reject(request.error);
+    };
+  });
+}
+
+// Get config from IndexedDB
+function getConfig() {
+  return new Promise((resolve, reject) => {
+    if (!db) {
+      reject(new Error("Database not initialized"));
+      return;
+    }
+
+    const transaction = db.transaction([CONFIG_STORE], "readonly");
+    const store = transaction.objectStore(CONFIG_STORE);
+    const request = store.get("userConfig");
+
+    request.onsuccess = () => {
+      resolve(request.result ? request.result.data : {});
+    };
+
+    request.onerror = () => {
+      reject(request.error);
+    };
+  });
+}
+
+// Save config to IndexedDB
+function saveConfig(configData) {
+  return new Promise((resolve, reject) => {
+    if (!db) {
+      reject(new Error("Database not initialized"));
+      return;
+    }
+
+    const transaction = db.transaction([CONFIG_STORE], "readwrite");
+    const store = transaction.objectStore(CONFIG_STORE);
+    const request = store.put({ id: "userConfig", data: configData });
+
+    request.onsuccess = () => {
+      resolve();
+    };
+
+    request.onerror = () => {
+      reject(request.error);
+    };
+  });
+}
+
+// Save activity to IndexedDB
+function saveActivity(activity) {
+  return new Promise((resolve, reject) => {
+    if (!db) {
+      reject(new Error("Database not initialized"));
+      return;
+    }
+
+    const transaction = db.transaction([ACTIVITIES_STORE], "readwrite");
+    const store = transaction.objectStore(ACTIVITIES_STORE);
+    const request = store.add(activity);
+
+    request.onsuccess = () => {
+      resolve();
+    };
+
+    request.onerror = () => {
+      reject(request.error);
+    };
+  });
+}
+
+// Update activity in IndexedDB
+function updateActivity(activity) {
+  return new Promise((resolve, reject) => {
+    if (!db) {
+      reject(new Error("Database not initialized"));
+      return;
+    }
+
+    const transaction = db.transaction([ACTIVITIES_STORE], "readwrite");
+    const store = transaction.objectStore(ACTIVITIES_STORE);
+    const request = store.put(activity);
+
+    request.onsuccess = () => {
+      resolve();
+    };
+
+    request.onerror = () => {
+      reject(request.error);
+    };
+  });
+}
+
+// Delete activity from IndexedDB
+function deleteActivity(activityId) {
+  return new Promise((resolve, reject) => {
+    if (!db) {
+      reject(new Error("Database not initialized"));
+      return;
+    }
+
+    const transaction = db.transaction([ACTIVITIES_STORE], "readwrite");
+    const store = transaction.objectStore(ACTIVITIES_STORE);
+    const request = store.delete(activityId);
+
+    request.onsuccess = () => {
+      resolve();
+    };
+
+    request.onerror = () => {
+      reject(request.error);
+    };
+  });
+}
+
+// Clear all activities from IndexedDB
+function clearAllActivities() {
+  return new Promise((resolve, reject) => {
+    if (!db) {
+      reject(new Error("Database not initialized"));
+      return;
+    }
+
+    const transaction = db.transaction([ACTIVITIES_STORE], "readwrite");
+    const store = transaction.objectStore(ACTIVITIES_STORE);
+    const request = store.clear();
+
+    request.onsuccess = () => {
+      resolve();
+    };
+
+    request.onerror = () => {
+      reject(request.error);
+    };
+  });
+}
+
+// Clear config from IndexedDB
+function clearConfig() {
+  return new Promise((resolve, reject) => {
+    if (!db) {
+      reject(new Error("Database not initialized"));
+      return;
+    }
+
+    const transaction = db.transaction([CONFIG_STORE], "readwrite");
+    const store = transaction.objectStore(CONFIG_STORE);
+    const request = store.clear();
+
+    request.onsuccess = () => {
+      resolve();
+    };
+
+    request.onerror = () => {
+      reject(request.error);
+    };
+  });
+}
+
+// Get activities by date range
+function getActivitiesByDateRange(startDate, endDate) {
+  return new Promise((resolve, reject) => {
+    if (!db) {
+      reject(new Error("Database not initialized"));
+      return;
+    }
+
+    const transaction = db.transaction([ACTIVITIES_STORE], "readonly");
+    const store = transaction.objectStore(ACTIVITIES_STORE);
+    const index = store.index("date");
+    const range = IDBKeyRange.bound(startDate, endDate);
+    const request = index.getAll(range);
+
+    request.onsuccess = () => {
+      resolve(request.result || []);
+    };
+
+    request.onerror = () => {
+      reject(request.error);
+    };
+  });
+}
+
+// Get activities by type
+function getActivitiesByType(type) {
+  return new Promise((resolve, reject) => {
+    if (!db) {
+      reject(new Error("Database not initialized"));
+      return;
+    }
+
+    const transaction = db.transaction([ACTIVITIES_STORE], "readonly");
+    const store = transaction.objectStore(ACTIVITIES_STORE);
+    const index = store.index("type");
+    const request = index.getAll(type);
+
+    request.onsuccess = () => {
+      resolve(request.result || []);
+    };
+
+    request.onerror = () => {
+      reject(request.error);
+    };
+  });
+}
+
+// Get activities with losses
+function getActivitiesWithLosses() {
+  return new Promise((resolve, reject) => {
+    if (!db) {
+      reject(new Error("Database not initialized"));
+      return;
+    }
+
+    const transaction = db.transaction([ACTIVITIES_STORE], "readonly");
+    const store = transaction.objectStore(ACTIVITIES_STORE);
+    const request = store.getAll();
+
+    request.onsuccess = () => {
+      const activities = request.result || [];
+      const activitiesWithLosses = activities.filter(
+        (activity) => activity.loss > 0
+      );
+      resolve(activitiesWithLosses);
+    };
+
+    request.onerror = () => {
+      reject(request.error);
+    };
+  });
+}
+
+// Get activities without losses
+function getActivitiesWithoutLosses() {
+  return new Promise((resolve, reject) => {
+    if (!db) {
+      reject(new Error("Database not initialized"));
+      return;
+    }
+
+    const transaction = db.transaction([ACTIVITIES_STORE], "readonly");
+    const store = transaction.objectStore(ACTIVITIES_STORE);
+    const request = store.getAll();
+
+    request.onsuccess = () => {
+      const activities = request.result || [];
+      const activitiesWithoutLosses = activities.filter(
+        (activity) => activity.loss === 0
+      );
+      resolve(activitiesWithoutLosses);
+    };
+
+    request.onerror = () => {
+      reject(request.error);
+    };
+  });
+}
+
+// Get today's activities
+function getTodaysActivities() {
+  return new Promise((resolve, reject) => {
+    if (!db) {
+      reject(new Error("Database not initialized"));
+      return;
+    }
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+
+    const transaction = db.transaction([ACTIVITIES_STORE], "readonly");
+    const store = transaction.objectStore(ACTIVITIES_STORE);
+    const index = store.index("date");
+    const range = IDBKeyRange.bound(
+      today.toISOString(),
+      tomorrow.toISOString()
+    );
+    const request = index.getAll(range);
+
+    request.onsuccess = () => {
+      resolve(request.result || []);
+    };
+
+    request.onerror = () => {
+      reject(request.error);
+    };
+  });
+}
+
+// Check storage status
+async function checkStorageStatus() {
+  try {
+    if (!navigator.storage || !navigator.storage.estimate) {
+      return 0; // Not supported
+    }
+
+    const estimate = await navigator.storage.estimate();
+    return estimate.usage / estimate.quota;
+  } catch (error) {
+    console.error("Error checking storage:", error);
+    return 0;
+  }
+}
+
+// Set up event listeners (mantido igual)
 function setupEventListeners() {
   // Navigation
   navToggle.addEventListener("click", toggleSidebar);
@@ -133,13 +536,13 @@ function setupEventListeners() {
   });
 }
 
-// Toggle sidebar visibility
+// Toggle sidebar visibility (mantido igual)
 function toggleSidebar() {
   sidebar.classList.toggle("active");
   overlay.classList.toggle("active");
 }
 
-// Show specific section
+// Show specific section (mantido igual)
 function showSection(sectionId) {
   sections.forEach((section) => {
     section.classList.remove("active");
@@ -160,87 +563,180 @@ function showSection(sectionId) {
   }
 }
 
-// Handle activity form submission
-function handleActivitySubmit(e) {
+// Handle activity form submission (modificado para IndexedDB)
+async function handleActivitySubmit(e) {
   e.preventDefault();
 
-  const activityType = document.getElementById("activityType").value;
-  const productionQty = parseInt(
-    document.getElementById("productionQty").value
-  );
-  const lossQty = parseInt(document.getElementById("lossQty").value);
-  const lossType = document.getElementById("lossType").value;
-  const activityDate = document.getElementById("activityDate").value;
-  const activityNotes = document.getElementById("activityNotes").value;
+  // Desabilitar o botão para evitar múltiplos cliques
+  const submitBtn = e.target.querySelector('button[type="submit"]');
+  submitBtn.disabled = true;
+  submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Salvando...';
 
-  // Get employee name from config
-  const employeeName = config.employeeName || "Colaborador não identificado";
+  try {
+    // Processar as fotos antes de salvar
+    await processPhotosBeforeSave();
 
-  // Create activity object
-  const activity = {
-    id: Date.now(),
-    type: activityType,
-    production: productionQty,
-    loss: lossQty,
-    lossType: lossType,
-    date: activityDate,
-    notes: activityNotes,
-    photos: capturedPhotos,
-    employee: employeeName,
-    timestamp: new Date().toISOString(),
-  };
+    const activityType = document.getElementById("activityType").value;
+    const productionQty = parseInt(
+      document.getElementById("productionQty").value
+    );
+    const lossQty = parseInt(document.getElementById("lossQty").value);
+    const lossType = document.getElementById("lossType").value;
+    const activityDate = document.getElementById("activityDate").value;
+    const activityNotes = document.getElementById("activityNotes").value;
 
-  // Add to activities array
-  activities.push(activity);
+    // Get employee name from config
+    const employeeName = config.employeeName || "Colaborador não identificado";
 
-  // Save to localStorage
-  localStorage.setItem("activities", JSON.stringify(activities));
+    // Create activity object - limitar tamanho das fotos
+    const optimizedPhotos = await Promise.all(
+      capturedPhotos.map((photo) => compressImage(photo, 0.7, 800))
+    );
 
-  // Reset form and captured photos
-  activityForm.reset();
-  capturedPhotos = [];
-  photoPreview.innerHTML = "";
+    const activity = {
+      id: Date.now(),
+      type: activityType,
+      production: productionQty,
+      loss: lossQty,
+      lossType: lossType,
+      date: activityDate,
+      notes: activityNotes,
+      photos: optimizedPhotos,
+      employee: employeeName,
+      timestamp: new Date().toISOString(),
+    };
 
-  // Set current date and time
-  const now = new Date();
-  const formattedDateTime = now.toISOString().slice(0, 16);
-  document.getElementById("activityDate").value = formattedDateTime;
+    // Save to IndexedDB
+    await saveActivity(activity);
 
-  // Show success message
-  showToast("Atividade registrada com sucesso!");
+    // Add to local activities array
+    activities.push(activity);
 
-  // Update dashboard and activities table
-  updateDashboard();
-}
+    // Reset form and captured photos
+    activityForm.reset();
+    capturedPhotos = [];
+    photoPreview.innerHTML = "";
 
-// Handle config form submission
-function handleConfigSubmit(e) {
-  e.preventDefault();
+    // Set current date and time
+    const now = new Date();
+    const formattedDateTime = now.toISOString().slice(0, 16);
+    document.getElementById("activityDate").value = formattedDateTime;
 
-  // Get form values
-  config.employeeName = document.getElementById("employeeName").value;
-  config.company = document.getElementById("company").value;
-  config.department = document.getElementById("department").value;
-  config.language = document.getElementById("language").value;
-  config.theme = document.getElementById("theme").value;
+    // Show success message
+    showToast("Atividade registrada com sucesso!");
 
-  // Save to localStorage
-  localStorage.setItem("config", JSON.stringify(config));
-
-  // Update user avatar with initials
-  if (config.employeeName) {
-    const names = config.employeeName.split(" ");
-    const initials =
-      names[0].charAt(0) +
-      (names.length > 1 ? names[names.length - 1].charAt(0) : "");
-    document.getElementById("userAvatar").textContent = initials;
+    // Update dashboard and activities table
+    updateDashboard();
+  } catch (error) {
+    console.error("Error saving activity:", error);
+    showToast("Erro ao salvar atividade: " + error.message, "error");
+  } finally {
+    // Reativar o botão
+    submitBtn.disabled = false;
+    submitBtn.innerHTML = '<i class="fas fa-save"></i> Salvar Atividade';
   }
-
-  // Show success message
-  showToast("Configurações salvas com sucesso!");
 }
 
-// Handle photo upload
+// Funções auxiliares para processamento de fotos (mantidas iguais)
+function processPhotosBeforeSave() {
+  return new Promise((resolve) => {
+    if (capturedPhotos.length === 0) {
+      resolve();
+      return;
+    }
+
+    const processNextPhoto = async (index) => {
+      if (index >= capturedPhotos.length) {
+        resolve();
+        return;
+      }
+
+      try {
+        const compressedImage = await compressImage(
+          capturedPhotos[index],
+          0.7,
+          800
+        );
+        capturedPhotos[index] = compressedImage;
+        processNextPhoto(index + 1);
+      } catch (error) {
+        console.error("Error compressing image:", error);
+        processNextPhoto(index + 1);
+      }
+    };
+
+    processNextPhoto(0);
+  });
+}
+
+function compressImage(dataUrl, quality, maxWidth) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = function () {
+      let width = img.width;
+      let height = img.height;
+
+      if (width > maxWidth) {
+        height = (height * maxWidth) / width;
+        width = maxWidth;
+      }
+
+      const canvas = document.createElement("canvas");
+      canvas.width = width;
+      canvas.height = height;
+
+      const ctx = canvas.getContext("2d");
+      ctx.drawImage(img, 0, 0, width, height);
+
+      try {
+        const compressedDataUrl = canvas.toDataURL("image/jpeg", quality);
+        resolve(compressedDataUrl);
+      } catch (error) {
+        reject(error);
+      }
+    };
+
+    img.onerror = function () {
+      reject(new Error("Falha ao carregar a imagem"));
+    };
+
+    img.src = dataUrl;
+  });
+}
+
+// Handle config form submission (modificado para IndexedDB)
+async function handleConfigSubmit(e) {
+  e.preventDefault();
+
+  try {
+    // Get form values
+    config.employeeName = document.getElementById("employeeName").value;
+    config.company = document.getElementById("company").value;
+    config.department = document.getElementById("department").value;
+    config.language = document.getElementById("language").value;
+    config.theme = document.getElementById("theme").value;
+
+    // Save to IndexedDB
+    await saveConfig(config);
+
+    // Update user avatar with initials
+    if (config.employeeName) {
+      const names = config.employeeName.split(" ");
+      const initials =
+        names[0].charAt(0) +
+        (names.length > 1 ? names[names.length - 1].charAt(0) : "");
+      document.getElementById("userAvatar").textContent = initials;
+    }
+
+    // Show success message
+    showToast("Configurações salvas com sucesso!");
+  } catch (error) {
+    console.error("Error saving config:", error);
+    showToast("Erro ao salvar configurações: " + error.message, "error");
+  }
+}
+
+// Handle photo upload (mantido igual)
 function handlePhotoUpload(e) {
   const files = e.target.files;
 
@@ -260,7 +756,7 @@ function handlePhotoUpload(e) {
   }
 }
 
-// Start camera for taking photos
+// Start camera for taking photos (mantido igual)
 function startCamera() {
   if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
     navigator.mediaDevices
@@ -282,7 +778,7 @@ function startCamera() {
   }
 }
 
-// Stop camera
+// Stop camera (mantido igual)
 function stopCamera() {
   if (stream) {
     stream.getTracks().forEach((track) => track.stop());
@@ -295,8 +791,8 @@ function stopCamera() {
   uploadPhotoBtn.style.display = "block";
 }
 
-// Capture photo from camera
-function capturePhoto() {
+// Capture photo from camera (mantido igual)
+async function capturePhoto() {
   const canvas = document.createElement("canvas");
   canvas.width = cameraPreview.videoWidth;
   canvas.height = cameraPreview.videoHeight;
@@ -304,14 +800,22 @@ function capturePhoto() {
   const ctx = canvas.getContext("2d");
   ctx.drawImage(cameraPreview, 0, 0, canvas.width, canvas.height);
 
-  const dataUrl = canvas.toDataURL("image/jpeg");
-  capturedPhotos.push(dataUrl);
+  try {
+    const dataUrl = canvas.toDataURL("image/jpeg");
 
-  renderPhotoPreviews();
-  stopCamera();
+    // Comprimir a imagem imediatamente após a captura
+    const compressedPhoto = await compressImage(dataUrl, 0.8, 1024);
+    capturedPhotos.push(compressedPhoto);
+
+    renderPhotoPreviews();
+    stopCamera();
+  } catch (error) {
+    console.error("Error capturing photo:", error);
+    showToast("Erro ao capturar foto. Tente novamente.", "error");
+  }
 }
 
-// Render photo previews
+// Render photo previews (mantido igual)
 function renderPhotoPreviews() {
   photoPreview.innerHTML = "";
 
@@ -325,99 +829,104 @@ function renderPhotoPreviews() {
   });
 }
 
-// View photo in modal
+// View photo in modal (mantido igual)
 function viewPhoto(photoData) {
   photoModalBody.innerHTML = `<img src="${photoData}" style="width: 100%; border-radius: 8px;">`;
   photoModal.classList.add("active");
 }
 
-// Update activities table
-function updateActivitiesTable() {
-  const filterDate = document.getElementById("tableFilterDate").value;
-  const filterType = document.getElementById("tableFilterType").value;
-  const filterLoss = document.getElementById("tableFilterLoss").value;
+// Update activities table (modificado para IndexedDB)
+async function updateActivitiesTable() {
+  try {
+    const filterDate = document.getElementById("tableFilterDate").value;
+    const filterType = document.getElementById("tableFilterType").value;
+    const filterLoss = document.getElementById("tableFilterLoss").value;
 
-  let filteredActivities = [...activities];
+    let filteredActivities = [...activities];
 
-  // Apply filters
-  if (filterDate) {
-    filteredActivities = filteredActivities.filter((activity) => {
-      return activity.date.startsWith(filterDate);
+    // Apply filters
+    if (filterDate) {
+      filteredActivities = filteredActivities.filter((activity) => {
+        return activity.date.startsWith(filterDate);
+      });
+    }
+
+    if (filterType) {
+      filteredActivities = filteredActivities.filter((activity) => {
+        return activity.type === filterType;
+      });
+    }
+
+    if (filterLoss === "with") {
+      filteredActivities = filteredActivities.filter((activity) => {
+        return activity.loss > 0;
+      });
+    } else if (filterLoss === "without") {
+      filteredActivities = filteredActivities.filter((activity) => {
+        return activity.loss === 0;
+      });
+    }
+
+    // Sort by date (newest first)
+    filteredActivities.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+    // Clear table body
+    activitiesTableBody.innerHTML = "";
+
+    if (filteredActivities.length === 0) {
+      tableEmptyState.style.display = "block";
+      return;
+    }
+
+    tableEmptyState.style.display = "none";
+
+    // Add rows to table
+    filteredActivities.forEach((activity) => {
+      const row = document.createElement("tr");
+
+      const date = new Date(activity.date);
+      const formattedDate = date.toLocaleDateString("pt-BR");
+      const formattedTime = date.toLocaleTimeString("pt-BR", {
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+
+      row.innerHTML = `
+                <td>${formattedDate} ${formattedTime}</td>
+                <td>${activity.type}</td>
+                <td>${activity.production}</td>
+                <td>${
+                  activity.loss > 0
+                    ? `${activity.loss} (${activity.lossType})`
+                    : "Nenhuma"
+                }</td>
+                <td>${activity.employee}</td>
+                <td class="table-actions">
+                    <button class="btn btn-outline table-action-btn view-activity" data-id="${
+                      activity.id
+                    }">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                </td>
+            `;
+
+      activitiesTableBody.appendChild(row);
     });
+
+    // Add event listeners to view buttons
+    document.querySelectorAll(".view-activity").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const activityId = parseInt(btn.getAttribute("data-id"));
+        viewActivity(activityId);
+      });
+    });
+  } catch (error) {
+    console.error("Error updating activities table:", error);
+    showToast("Erro ao carregar atividades: " + error.message, "error");
   }
-
-  if (filterType) {
-    filteredActivities = filteredActivities.filter((activity) => {
-      return activity.type === filterType;
-    });
-  }
-
-  if (filterLoss === "with") {
-    filteredActivities = filteredActivities.filter((activity) => {
-      return activity.loss > 0;
-    });
-  } else if (filterLoss === "without") {
-    filteredActivities = filteredActivities.filter((activity) => {
-      return activity.loss === 0;
-    });
-  }
-
-  // Sort by date (newest first)
-  filteredActivities.sort((a, b) => new Date(b.date) - new Date(a.date));
-
-  // Clear table body
-  activitiesTableBody.innerHTML = "";
-
-  if (filteredActivities.length === 0) {
-    tableEmptyState.style.display = "block";
-    return;
-  }
-
-  tableEmptyState.style.display = "none";
-
-  // Add rows to table
-  filteredActivities.forEach((activity) => {
-    const row = document.createElement("tr");
-
-    const date = new Date(activity.date);
-    const formattedDate = date.toLocaleDateString("pt-BR");
-    const formattedTime = date.toLocaleTimeString("pt-BR", {
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-
-    row.innerHTML = `
-                    <td>${formattedDate} ${formattedTime}</td>
-                    <td>${activity.type}</td>
-                    <td>${activity.production}</td>
-                    <td>${
-                      activity.loss > 0
-                        ? `${activity.loss} (${activity.lossType})`
-                        : "Nenhuma"
-                    }</td>
-                    <td>${activity.employee}</td>
-                    <td class="table-actions">
-                        <button class="btn btn-outline table-action-btn view-activity" data-id="${
-                          activity.id
-                        }">
-                            <i class="fas fa-eye"></i>
-                        </button>
-                    </td>
-                `;
-
-    activitiesTableBody.appendChild(row);
-  });
-
-  // Add event listeners to view buttons
-  document.querySelectorAll(".view-activity").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      const activityId = parseInt(btn.getAttribute("data-id"));
-      viewActivity(activityId);
-    });
-  });
 }
 
-// View activity details
+// View activity details (mantido igual)
 function viewActivity(activityId) {
   const activity = activities.find((a) => a.id === activityId);
 
@@ -433,71 +942,67 @@ function viewActivity(activityId) {
   let photosHtml = "";
   if (activity.photos && activity.photos.length > 0) {
     photosHtml = `
-                    <div class="activity-detail">
-                        <div class="activity-detail-label">Fotos:</div>
-                        <div class="photo-gallery">
-                            ${activity.photos
-                              .map(
-                                (photo) => `
-                                <div class="gallery-item">
-                                    <img src="${photo}" onclick="viewPhoto('${photo}')">
-                                </div>
-                            `
-                              )
-                              .join("")}
-                        </div>
-                    </div>
-                `;
+            <div class="activity-detail">
+                <div class="activity-detail-label">Fotos:</div>
+                <div class="photo-gallery">
+                    ${activity.photos
+                      .map(
+                        (photo) => `
+                            <div class="gallery-item">
+                                <img src="${photo}" onclick="viewPhoto('${photo}')">
+                            </div>
+                        `
+                      )
+                      .join("")}
+                </div>
+            </div>
+        `;
   }
 
   activityModalBody.innerHTML = `
-                <div class="activity-detail">
-                    <div class="activity-detail-label">Data e Hora:</div>
-                    <div class="activity-detail-value">${formattedDate} às ${formattedTime}</div>
-                </div>
-                
-                <div class="activity-detail">
-                    <div class="activity-detail-label">Tipo de Atividade:</div>
-                    <div class="activity-detail-value">${activity.type}</div>
-                </div>
-                
-                <div class="activity-detail">
-                    <div class="activity-detail-label">Quantidade Produzida:</div>
-                    <div class="activity-detail-value">${
-                      activity.production
-                    }</div>
-                </div>
-                
-                <div class="activity-detail">
-                    <div class="activity-detail-label">Quantidade de Perda:</div>
-                    <div class="activity-detail-value">${
-                      activity.loss > 0
-                        ? `${activity.loss} (${activity.lossType})`
-                        : "Nenhuma perda"
-                    }</div>
-                </div>
-                
-                <div class="activity-detail">
-                    <div class="activity-detail-label">Colaborador:</div>
-                    <div class="activity-detail-value">${
-                      activity.employee
-                    }</div>
-                </div>
-                
-                <div class="activity-detail">
-                    <div class="activity-detail-label">Observações:</div>
-                    <div class="activity-detail-value">${
-                      activity.notes || "Nenhuma observação"
-                    }</div>
-                </div>
-                
-                ${photosHtml}
-            `;
+        <div class="activity-detail">
+            <div class="activity-detail-label">Data e Hora:</div>
+            <div class="activity-detail-value">${formattedDate} às ${formattedTime}</div>
+        </div>
+        
+        <div class="activity-detail">
+            <div class="activity-detail-label">Tipo de Atividade:</div>
+            <div class="activity-detail-value">${activity.type}</div>
+        </div>
+        
+        <div class="activity-detail">
+            <div class="activity-detail-label">Quantidade Produzida:</div>
+            <div class="activity-detail-value">${activity.production}</div>
+        </div>
+        
+        <div class="activity-detail">
+            <div class="activity-detail-label">Quantidade de Perda:</div>
+            <div class="activity-detail-value">${
+              activity.loss > 0
+                ? `${activity.loss} (${activity.lossType})`
+                : "Nenhuma perda"
+            }</div>
+        </div>
+        
+        <div class="activity-detail">
+            <div class="activity-detail-label">Colaborador:</div>
+            <div class="activity-detail-value">${activity.employee}</div>
+        </div>
+        
+        <div class="activity-detail">
+            <div class="activity-detail-label">Observações:</div>
+            <div class="activity-detail-value">${
+              activity.notes || "Nenhuma observação"
+            }</div>
+        </div>
+        
+        ${photosHtml}
+    `;
 
   viewActivityModal.classList.add("active");
 }
 
-// Update dashboard
+// Update dashboard (mantido igual)
 function updateDashboard() {
   // Calculate stats
   const totalProduction = activities.reduce(
@@ -549,12 +1054,12 @@ function updateDashboard() {
     const li = document.createElement("li");
     li.className = "incident-item";
     li.innerHTML = `
-                    <div>
-                        <span class="incident-type">${activity.lossType}</span>
-                        <p>${activity.type} - ${activity.loss} unidades perdidas</p>
-                    </div>
-                    <div class="incident-date">${formattedDate}</div>
-                `;
+            <div>
+                <span class="incident-type">${activity.lossType}</span>
+                <p>${activity.type} - ${activity.loss} unidades perdidas</p>
+            </div>
+            <div class="incident-date">${formattedDate}</div>
+        `;
 
     incidentList.appendChild(li);
   });
@@ -563,7 +1068,7 @@ function updateDashboard() {
   updateProductionChart();
 }
 
-// Update production chart
+// Update production chart (mantido igual)
 function updateProductionChart() {
   const ctx = document.getElementById("productionChart").getContext("2d");
 
@@ -646,646 +1151,559 @@ function updateProductionChart() {
   }
 }
 
-// Generate report
-// Generate report
-// Generate report
-function generateReport() {
-  const period = reportPeriod.value;
-  const type = document.getElementById("reportType").value;
-  let startDate, endDate;
+// Generate report (modificado para IndexedDB)
+// Generate report (função completamente reformulada)
+async function generateReport() {
+    try {
+        const period = reportPeriod.value;
+        const type = document.getElementById("reportType").value;
+        let startDate, endDate;
 
-  // Set date range based on period
-  const today = new Date();
-  today.setHours(23, 59, 59, 999); // Fim do dia
+        // Set date range based on period
+        const now = new Date();
+        endDate = now.toISOString();
 
-  switch (period) {
-    case "today":
-      startDate = new Date(today);
-      startDate.setHours(0, 0, 0, 0); // Início do dia
-      endDate = new Date(today);
-      break;
-    case "week":
-      startDate = new Date(today);
-      startDate.setDate(today.getDate() - 7);
-      startDate.setHours(0, 0, 0, 0);
-      endDate = new Date(today);
-      break;
-    case "month":
-      startDate = new Date(today);
-      startDate.setMonth(today.getMonth() - 1);
-      startDate.setHours(0, 0, 0, 0);
-      endDate = new Date(today);
-      break;
-    case "custom":
-      const startInput = document.getElementById("startDate").value;
-      const endInput = document.getElementById("endDate").value;
+        if (period === "today") {
+            startDate = new Date();
+            startDate.setHours(0, 0, 0, 0);
+            startDate = startDate.toISOString();
+        } else if (period === "week") {
+            startDate = new Date();
+            startDate.setDate(now.getDate() - 7);
+            startDate.setHours(0, 0, 0, 0);
+            startDate = startDate.toISOString();
+        } else if (period === "month") {
+            startDate = new Date();
+            startDate.setMonth(now.getMonth() - 1);
+            startDate.setHours(0, 0, 0, 0);
+            startDate = startDate.toISOString();
+        } else if (period === "custom") {
+            const startDateInput = document.getElementById("startDate").value;
+            const endDateInput = document.getElementById("endDate").value;
+            
+            if (!startDateInput || !endDateInput) {
+                showToast("Por favor, selecione ambas as datas para o período personalizado.", "warning");
+                return;
+            }
+            
+            startDate = new Date(startDateInput);
+            startDate.setHours(0, 0, 0, 0);
+            startDate = startDate.toISOString();
+            
+            endDate = new Date(endDateInput);
+            endDate.setHours(23, 59, 59, 999);
+            endDate = endDate.toISOString();
+        }
 
-      if (!startInput || !endInput) {
-        showToast(
-          "Selecione ambas as datas para o período personalizado.",
-          "warning"
-        );
-        return;
-      }
+        // Get activities from IndexedDB for the selected period
+        const periodActivities = await getActivitiesByDateRange(startDate, endDate);
 
-      startDate = new Date(startInput);
-      startDate.setHours(0, 0, 0, 0);
-      endDate = new Date(endInput);
-      endDate.setHours(23, 59, 59, 999);
-      break;
-  }
+        // Filter by type if specified
+        let filteredActivities = periodActivities;
+        if (type && type !== "") {
+            filteredActivities = periodActivities.filter(
+                (activity) => activity.type === type
+            );
+        }
 
-  // Filter activities
-  let filteredActivities = activities.filter((activity) => {
-    const activityDate = new Date(activity.date);
-    return activityDate >= startDate && activityDate <= endDate;
-  });
+        // Update report preview
+        updateReportPreview(filteredActivities, startDate, endDate);
 
-  if (type) {
-    filteredActivities = filteredActivities.filter(
-      (activity) => activity.type === type
-    );
-  }
+        // Show success message
+        showToast("Relatório gerado com sucesso! Visualize a prévia abaixo.");
 
-  // Generate report preview
-  const reportPreview = document.getElementById("reportPreview");
-
-  if (filteredActivities.length === 0) {
-    reportPreview.innerHTML = `
-      <p>Nenhuma atividade encontrada para os filtros selecionados.</p>
-      <p><strong>Período:</strong> ${startDate.toLocaleDateString(
-        "pt-BR"
-      )} a ${endDate.toLocaleDateString("pt-BR")}</p>
-      <p><strong>Tipo:</strong> ${type || "Todos"}</p>
-    `;
-    return;
-  }
-
-  // Calculate totals
-  const totalProduction = filteredActivities.reduce(
-    (sum, activity) => sum + activity.production,
-    0
-  );
-  const totalLoss = filteredActivities.reduce(
-    (sum, activity) => sum + activity.loss,
-    0
-  );
-  const efficiency =
-    totalProduction > 0
-      ? (((totalProduction - totalLoss) / totalProduction) * 100).toFixed(1)
-      : 0;
-
-  // Create report HTML
-  let reportHtml = `
-    <h4>Relatório de Atividades</h4>
-    <p><strong>Período:</strong> ${startDate.toLocaleDateString(
-      "pt-BR"
-    )} a ${endDate.toLocaleDateString("pt-BR")}</p>
-    <p><strong>Tipo:</strong> ${type || "Todos"}</p>
-    <p><strong>Total de Produção:</strong> ${totalProduction}</p>
-    <p><strong>Total de Perdas:</strong> ${totalLoss}</p>
-    <p><strong>Eficiência:</strong> ${efficiency}%</p>
-    <p><strong>Total de Registros:</strong> ${filteredActivities.length}</p>
-    
-    <table class="data-table">
-        <thead>
-            <tr>
-                <th>Data</th>
-                <th>Tipo</th>
-                <th>Produção</th>
-                <th>Perdas</th>
-                <th>Colaborador</th>
-            </tr>
-        </thead>
-        <tbody>
-  `;
-
-  filteredActivities.forEach((activity) => {
-    const date = new Date(activity.date);
-    const formattedDate = date.toLocaleDateString("pt-BR");
-    const formattedTime = date.toLocaleTimeString("pt-BR", {
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-
-    reportHtml += `
-      <tr>
-          <td>${formattedDate} ${formattedTime}</td>
-          <td>${activity.type}</td>
-          <td>${activity.production}</td>
-          <td>${
-            activity.loss > 0
-              ? `${activity.loss} (${activity.lossType})`
-              : "Nenhuma"
-          }</td>
-          <td>${activity.employee}</td>
-      </tr>
-    `;
-  });
-
-  reportHtml += `
-      </tbody>
-    </table>
-    
-    <div style="margin-top: 20px;">
-        <button class="btn btn-success" id="exportPdf">
-            <i class="fas fa-file-pdf"></i> Exportar como PDF
-        </button>
-    </div>
-  `;
-
-  reportPreview.innerHTML = reportHtml;
-
-  // Add event listener to export button
-  document.getElementById("exportPdf").addEventListener("click", () => {
-    exportToPdf(filteredActivities, startDate, endDate, type);
-  });
+    } catch (error) {
+        console.error("Error generating report:", error);
+        showToast("Erro ao gerar relatório: " + error.message, "error");
+    }
 }
+// Update report preview
+function updateReportPreview(activities, startDate, endDate) {
+    const reportPreview = document.getElementById("reportPreview");
+    
+    if (activities.length === 0) {
+        reportPreview.innerHTML = `
+            <div class="empty-state">
+                <div><i class="fas fa-inbox"></i></div>
+                <h3>Nenhuma atividade encontrada</h3>
+                <p>Não há registros para os filtros selecionados.</p>
+            </div>
+        `;
+        return;
+    }
 
-// Export to PDF function
-// Export to PDF function with improved layout
-async function exportToPdf(activities, startDate, endDate, type) {
-  try {
-    // Initialize PDF
-    const { jsPDF } = window.jspdf;
-    const doc = new jsPDF();
-
-    // Set document properties
-    doc.setProperties({
-      title: "Relatório de Atividades - Work Manager",
-      subject: `Relatório de ${startDate.toLocaleDateString(
-        "pt-BR"
-      )} a ${endDate.toLocaleDateString("pt-BR")}`,
-      author: config.employeeName || "Work Manager",
-      creator: "Work Manager Profissional",
-    });
-
-    // Add title
-    doc.setFontSize(20);
-    doc.setTextColor(40, 40, 40);
-    doc.text("Relatório de Atividades", 105, 20, { align: "center" });
-
-    // Add period information
-    doc.setFontSize(12);
-    doc.setTextColor(100, 100, 100);
-    doc.text(
-      `Período: ${startDate.toLocaleDateString(
-        "pt-BR"
-      )} a ${endDate.toLocaleDateString("pt-BR")}`,
-      14,
-      30
-    );
-
-    // Add filters information
-    doc.text(`Tipo: ${type || "Todos"}`, 14, 37);
-
-    // Calculate totals
+    // Calculate stats
     const totalProduction = activities.reduce(
-      (sum, activity) => sum + activity.production,
-      0
+        (sum, activity) => sum + activity.production,
+        0
     );
-    const totalLoss = activities.reduce(
-      (sum, activity) => sum + activity.loss,
-      0
+    const totalLosses = activities.reduce(
+        (sum, activity) => sum + activity.loss,
+        0
     );
-    const efficiency =
-      totalProduction > 0
-        ? (((totalProduction - totalLoss) / totalProduction) * 100).toFixed(1)
+    const efficiency = totalProduction > 0
+        ? (((totalProduction - totalLosses) / totalProduction) * 100).toFixed(1)
         : 0;
 
-    // Add summary
-    doc.text(`Total de Produção: ${totalProduction}`, 14, 44);
-    doc.text(`Total de Perdas: ${totalLoss}`, 14, 51);
-    doc.text(`Eficiência: ${efficiency}%`, 14, 58);
-    doc.text(`Total de Registros: ${activities.length}`, 14, 65);
+    const startDateFormatted = new Date(startDate).toLocaleDateString("pt-BR");
+    const endDateFormatted = new Date(endDate).toLocaleDateString("pt-BR");
+    const reportDate = new Date().toLocaleDateString("pt-BR");
 
-    // Add generated date
-    const now = new Date();
-    doc.text(
-      `Relatório gerado em: ${now.toLocaleDateString(
-        "pt-BR"
-      )} às ${now.toLocaleTimeString("pt-BR")}`,
-      14,
-      72
-    );
+    // Create HTML for the preview
+    let previewHTML = `
+        <div class="report-preview-header">
+            <h3>Prévia do Relatório</h3>
+            <p><strong>Período:</strong> ${startDateFormatted} a ${endDateFormatted}</p>
+            <p><strong>Data do relatório:</strong> ${reportDate}</p>
+            <button class="btn btn-success" id="exportPdfBtn">
+                <i class="fas fa-file-pdf"></i> Exportar para PDF
+            </button>
+        </div>
 
-    // Add company/employee info if available
-    if (config.company || config.employeeName) {
-      let companyInfo = "";
-      if (config.company && config.employeeName) {
-        companyInfo = `${config.company} - ${config.employeeName}`;
-      } else if (config.company) {
-        companyInfo = config.company;
-      } else if (config.employeeName) {
-        companyInfo = config.employeeName;
-      }
-      doc.text(companyInfo, 105, 79, { align: "center" });
-    }
+        <div class="report-summary">
+            <h4><i class="fas fa-chart-pie"></i> Resumo Estatístico</h4>
+            <div class="stats-grid" style="grid-template-columns: repeat(2, 1fr);">
+                <div class="stat-card">
+                    <div class="stat-label">Total de Produção</div>
+                    <div class="stat-value">${totalProduction}</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Total de Perdas</div>
+                    <div class="stat-value">${totalLosses}</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Eficiência</div>
+                    <div class="stat-value">${efficiency}%</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Total de Atividades</div>
+                    <div class="stat-value">${activities.length}</div>
+                </div>
+            </div>
+        </div>
 
-    // Add table header
-    doc.setFillColor(52, 152, 219);
-    doc.setTextColor(255, 255, 255);
-    doc.rect(14, 85, 182, 10, "F");
+        <div class="report-activities">
+            <h4><i class="fas fa-table"></i> Detalhes das Atividades (${activities.length} registros)</h4>
+            <div class="table-responsive">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Data/Hora</th>
+                            <th>Tipo</th>
+                            <th>Produção</th>
+                            <th>Perdas</th>
+                            <th>Tipo de Perda</th>
+                            <th>Colaborador</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+    `;
 
-    // Table headers
-    doc.text("Data/Hora", 25, 91);
-    doc.text("Tipo", 65, 91);
-    doc.text("Produção", 105, 91);
-    doc.text("Perdas", 135, 91);
-    doc.text("Colaborador", 165, 91);
-
-    // Add table rows
-    let yPosition = 100;
-    doc.setTextColor(0, 0, 0);
-    doc.setFontSize(10);
-
-    // First, add all activities to the table without photos
-    for (let i = 0; i < activities.length; i++) {
-      const activity = activities[i];
-      const date = new Date(activity.date);
-      const formattedDate = date.toLocaleDateString("pt-BR");
-      const formattedTime = date.toLocaleTimeString("pt-BR", {
-        hour: "2-digit",
-        minute: "2-digit",
-      });
-
-      // Check if we need a new page
-      if (yPosition > 270) {
-        doc.addPage();
-        yPosition = 20;
-
-        // Add table header on new page
-        doc.setFontSize(12);
-        doc.setFillColor(52, 152, 219);
-        doc.setTextColor(255, 255, 255);
-        doc.rect(14, 10, 182, 10, "F");
-        doc.text("Data/Hora", 25, 16);
-        doc.text("Tipo", 65, 16);
-        doc.text("Produção", 105, 16);
-        doc.text("Perdas", 135, 16);
-        doc.text("Colaborador", 165, 16);
-
-        doc.setTextColor(0, 0, 0);
-        doc.setFontSize(10);
-        yPosition = 25;
-      }
-
-      // Add row data
-      doc.text(`${formattedDate} ${formattedTime}`, 25, yPosition);
-      doc.text(activity.type, 65, yPosition);
-      doc.text(activity.production.toString(), 105, yPosition);
-      doc.text(
-        activity.loss > 0
-          ? `${activity.loss} (${activity.lossType})`
-          : "Nenhuma",
-        135,
-        yPosition
-      );
-      doc.text(activity.employee, 165, yPosition);
-
-      yPosition += 7;
-
-      // Add separator line
-      doc.setDrawColor(200, 200, 200);
-      doc.line(14, yPosition, 196, yPosition);
-      yPosition += 5;
-    }
-
-    // Now add a new section for photos
-    const activitiesWithPhotos = activities.filter(
-      (activity) => activity.photos && activity.photos.length > 0
-    );
-
-    if (activitiesWithPhotos.length > 0) {
-      // Add a new page for photos
-      doc.addPage();
-
-      // Add photos section title
-      doc.setFontSize(16);
-      doc.setTextColor(40, 40, 40);
-      doc.text("Fotos das Atividades", 105, 20, { align: "center" });
-
-      doc.setFontSize(12);
-      doc.setTextColor(100, 100, 100);
-      doc.text(
-        `Período: ${startDate.toLocaleDateString(
-          "pt-BR"
-        )} a ${endDate.toLocaleDateString("pt-BR")}`,
-        14,
-        30
-      );
-
-      let photoYPosition = 40;
-
-      // Process each activity with photos
-      for (let i = 0; i < activitiesWithPhotos.length; i++) {
-        const activity = activitiesWithPhotos[i];
+    // Add activities to the table
+    activities.forEach(activity => {
         const date = new Date(activity.date);
         const formattedDate = date.toLocaleDateString("pt-BR");
         const formattedTime = date.toLocaleTimeString("pt-BR", {
-          hour: "2-digit",
-          minute: "2-digit",
+            hour: "2-digit",
+            minute: "2-digit"
         });
 
-        // Add activity header
-        doc.setFontSize(12);
-        doc.setTextColor(52, 152, 219);
-        doc.text(
-          `Atividade: ${activity.type} - ${formattedDate} ${formattedTime}`,
-          14,
-          photoYPosition
+        previewHTML += `
+            <tr>
+                <td>${formattedDate} ${formattedTime}</td>
+                <td>${activity.type}</td>
+                <td>${activity.production}</td>
+                <td>${activity.loss > 0 ? activity.loss : '-'}</td>
+                <td>${activity.lossType || '-'}</td>
+                <td>${activity.employee}</td>
+            </tr>
+        `;
+    });
+
+    previewHTML += `
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    `;
+
+    reportPreview.innerHTML = previewHTML;
+
+    // Add event listener to the export button
+    document.getElementById("exportPdfBtn").addEventListener("click", () => {
+        exportToPdf(activities, startDate, endDate);
+    });
+}
+
+// Export to PDF function
+async function exportToPdf(activities, startDate, endDate) {
+    try {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+
+        // Calculate stats
+        const totalProduction = activities.reduce(
+            (sum, activity) => sum + activity.production,
+            0
         );
-        doc.text(`Colaborador: ${activity.employee}`, 14, photoYPosition + 7);
+        const totalLosses = activities.reduce(
+            (sum, activity) => sum + activity.loss,
+            0
+        );
+        const efficiency = totalProduction > 0
+            ? (((totalProduction - totalLosses) / totalProduction) * 100).toFixed(1)
+            : 0;
 
-        if (activity.notes) {
-          doc.setFontSize(10);
-          doc.setTextColor(100, 100, 100);
-          const splitNotes = doc.splitTextToSize(
-            `Observações: ${activity.notes}`,
-            180
-          );
-          doc.text(splitNotes, 14, photoYPosition + 15);
-          photoYPosition += splitNotes.length * 5 + 5;
-        } else {
-          photoYPosition += 15;
-        }
+        const startDateFormatted = new Date(startDate).toLocaleDateString("pt-BR");
+        const endDateFormatted = new Date(endDate).toLocaleDateString("pt-BR");
+        const reportDate = new Date().toLocaleDateString("pt-BR");
+        const reportTime = new Date().toLocaleTimeString("pt-BR");
 
+        // Header
+        doc.setFontSize(20);
+        doc.setTextColor(44, 62, 80);
+        doc.text("Relatório de Produção", 105, 15, { align: "center" });
+
+        // Company Info
+        doc.setFontSize(12);
+        doc.setTextColor(128, 128, 128);
+        doc.text(`Empresa: ${config.company || "Não especificada"}`, 20, 25);
+        doc.text(`Departamento: ${config.department || "Não especificado"}`, 20, 32);
+        doc.text(`Relatório gerado em: ${reportDate} às ${reportTime}`, 20, 39);
+
+        // Period
+        doc.text(`Período: ${startDateFormatted} a ${endDateFormatted}`, 105, 25, { align: "center" });
+
+        // Summary
+        doc.setFontSize(14);
+        doc.setTextColor(44, 62, 80);
+        doc.text("Resumo Estatístico", 20, 55);
+
+        doc.setFontSize(12);
         doc.setTextColor(0, 0, 0);
+        doc.text(`Total de Produção: ${totalProduction}`, 20, 65);
+        doc.text(`Total de Perdas: ${totalLosses}`, 20, 72);
+        doc.text(`Eficiência: ${efficiency}%`, 20, 79);
+        doc.text(`Total de Atividades: ${activities.length}`, 20, 86);
 
-        // Process each photo
-        for (let j = 0; j < activity.photos.length; j++) {
-          const photoData = activity.photos[j];
+        // Activities table
+        doc.setFontSize(14);
+        doc.setTextColor(44, 62, 80);
+        doc.text("Detalhes das Atividades", 20, 100);
 
-          // Check if we need a new page
-          if (photoYPosition > 200) {
-            doc.addPage();
-            photoYPosition = 20;
-          }
+        // Table headers
+        doc.setFillColor(52, 152, 219);
+        doc.setTextColor(255, 255, 255);
+        doc.rect(20, 105, 170, 10, 'F');
+        doc.text("Data/Hora", 25, 111);
+        doc.text("Tipo", 60, 111);
+        doc.text("Produção", 95, 111);
+        doc.text("Perdas", 125, 111);
+        doc.text("Colaborador", 150, 111);
 
-          try {
-            // Add image with timestamp
-            const imgWithTimestamp = await createImageWithTimestamp(
-              photoData,
-              `${formattedDate} ${formattedTime} - ${activity.employee}`
-            );
+        // Table content
+        doc.setFontSize(10);
+        doc.setTextColor(0, 0, 0);
+        let yPosition = 115;
+        let page = 1;
 
-            const img = new Image();
-            img.src = imgWithTimestamp;
+        activities.forEach((activity, index) => {
+            // Add new page if needed
+            if (yPosition > 270 && index < activities.length - 1) {
+                doc.addPage();
+                yPosition = 20;
+                page++;
+                
+                // Add header to new page
+                doc.setFontSize(10);
+                doc.setTextColor(128, 128, 128);
+                doc.text(`Página ${page} - Relatório de Produção - ${config.company || "Não especificada"}`, 105, 10, { align: "center" });
+                doc.setDrawColor(200, 200, 200);
+                doc.line(20, 15, 190, 15);
+                
+                // Table headers for new page
+                doc.setFillColor(52, 152, 219);
+                doc.setTextColor(255, 255, 255);
+                doc.rect(20, 20, 170, 10, 'F');
+                doc.text("Data/Hora", 25, 26);
+                doc.text("Tipo", 60, 26);
+                doc.text("Produção", 95, 26);
+                doc.text("Perdas", 125, 26);
+                doc.text("Colaborador", 150, 26);
+                
+                yPosition = 30;
+            }
 
-            await new Promise((resolve) => {
-              img.onload = resolve;
+            const date = new Date(activity.date);
+            const formattedDate = date.toLocaleDateString("pt-BR");
+            const formattedTime = date.toLocaleTimeString("pt-BR", {
+                hour: "2-digit",
+                minute: "2-digit"
             });
 
-            // Add image to PDF (resized to fit)
-            const maxWidth = 180;
-            const maxHeight = 120;
-
-            let imgWidth = img.width;
-            let imgHeight = img.height;
-
-            // Scale image if needed
-            if (imgWidth > maxWidth) {
-              const ratio = maxWidth / imgWidth;
-              imgWidth = maxWidth;
-              imgHeight = imgHeight * ratio;
+            // Alternate row colors
+            if (index % 2 === 0) {
+                doc.setFillColor(245, 245, 245);
+                doc.rect(20, yPosition - 4, 170, 6, 'F');
             }
 
-            if (imgHeight > maxHeight) {
-              const ratio = maxHeight / imgHeight;
-              imgHeight = maxHeight;
-              imgWidth = imgWidth * ratio;
+            doc.setTextColor(0, 0, 0);
+            doc.text(`${formattedDate} ${formattedTime}`, 25, yPosition);
+            doc.text(activity.type, 60, yPosition);
+            doc.text(activity.production.toString(), 95, yPosition);
+            doc.text(activity.loss > 0 ? activity.loss.toString() : '-', 125, yPosition);
+            doc.text(activity.employee, 150, yPosition);
+
+            yPosition += 6;
+        });
+
+        // Check if there are photos to include
+        const activitiesWithPhotos = activities.filter(activity => 
+            activity.photos && activity.photos.length > 0
+        );
+
+        if (activitiesWithPhotos.length > 0) {
+            // Add photos page
+            doc.addPage();
+            doc.setFontSize(14);
+            doc.setTextColor(44, 62, 80);
+            doc.text("Registros Fotográficos", 105, 20, { align: "center" });
+            
+            let photoYPosition = 30;
+            let photoPage = page + 1;
+            
+            for (const activity of activitiesWithPhotos) {
+                const date = new Date(activity.date);
+                const formattedDate = date.toLocaleDateString("pt-BR");
+                const formattedTime = date.toLocaleTimeString("pt-BR");
+                
+                for (let i = 0; i < activity.photos.length; i++) {
+                    // Check if we need a new page
+                    if (photoYPosition > 200) {
+                        doc.addPage();
+                        photoYPosition = 20;
+                        photoPage++;
+                        
+                        // Add header to new page
+                        doc.setFontSize(10);
+                        doc.setTextColor(128, 128, 128);
+                        doc.text(`Página ${photoPage} - Registros Fotográficos - ${config.company || "Não especificada"}`, 105, 10, { align: "center" });
+                    }
+                    
+                    // Add photo metadata
+                    doc.setFontSize(12);
+                    doc.setTextColor(44, 62, 80);
+                    doc.text(`Atividade: ${activity.type}`, 20, photoYPosition);
+                    doc.text(`Data: ${formattedDate} ${formattedTime}`, 20, photoYPosition + 7);
+                    doc.text(`Colaborador: ${activity.employee}`, 20, photoYPosition + 14);
+                    
+                    if (activity.notes) {
+                        doc.setFontSize(10);
+                        doc.text(`Observações: ${activity.notes}`, 20, photoYPosition + 21);
+                    }
+                    
+                    // Add photo
+                    try {
+                        // Add image with reduced quality to keep file size manageable
+                        doc.addImage(
+                            activity.photos[i], 
+                            'JPEG', 
+                            20, 
+                            photoYPosition + 25, 
+                            170, 
+                            100
+                        );
+                    } catch (error) {
+                        console.error("Error adding image to PDF:", error);
+                        doc.setFontSize(10);
+                        doc.setTextColor(255, 0, 0);
+                        doc.text("Erro ao carregar imagem", 20, photoYPosition + 25);
+                    }
+                    
+                    photoYPosition += 140;
+                    
+                    // Add separation between photos
+                    if (i < activity.photos.length - 1) {
+                        doc.setDrawColor(200, 200, 200);
+                        doc.line(20, photoYPosition, 190, photoYPosition);
+                        photoYPosition += 10;
+                    }
+                }
+                
+                // Add separation between activities
+                if (activitiesWithPhotos.indexOf(activity) < activitiesWithPhotos.length - 1) {
+                    doc.setDrawColor(200, 200, 200);
+                    doc.line(20, photoYPosition, 190, photoYPosition);
+                    photoYPosition += 10;
+                }
             }
-
-            // Center image
-            const xPosition = (210 - imgWidth) / 2;
-
-            doc.addImage(
-              imgWithTimestamp,
-              "JPEG",
-              xPosition,
-              photoYPosition,
-              imgWidth,
-              imgHeight
-            );
-
-            photoYPosition += imgHeight + 15;
-          } catch (error) {
-            console.error("Error processing image:", error);
-            doc.text("Erro ao processar imagem", 14, photoYPosition);
-            photoYPosition += 10;
-          }
         }
 
-        // Add separator between activities
-        doc.setDrawColor(200, 200, 200);
-        doc.line(14, photoYPosition, 196, photoYPosition);
-        photoYPosition += 10;
-      }
+        // Save PDF
+        const fileName = `relatorio_producao_${new Date().toISOString().slice(0, 10)}.pdf`;
+        doc.save(fileName);
+
+        showToast("PDF exportado com sucesso!");
+    } catch (error) {
+        console.error("Error exporting PDF:", error);
+        showToast("Erro ao exportar PDF: " + error.message, "error");
     }
-
-    // Save the PDF
-    const fileName = `relatorio_${startDate.toISOString().split("T")[0]}_a_${
-      endDate.toISOString().split("T")[0]
-    }.pdf`;
-    doc.save(fileName);
-
-    showToast("PDF gerado com sucesso!");
-  } catch (error) {
-    console.error("Error generating PDF:", error);
-    showToast("Erro ao gerar PDF: " + error.message, "error");
-  }
 }
 
-// Function to create image with timestamp
-// Function to create image with timestamp (improved)
-// Function to create image with timestamp (improved visibility)
-function createImageWithTimestamp(imageData, timestamp) {
-  return new Promise((resolve) => {
-    const img = new Image();
-    img.onload = function () {
-      // Create canvas with extra space for timestamp
-      const canvas = document.createElement("canvas");
-      canvas.width = img.width;
-      canvas.height = img.height + 40; // Extra space for timestamp
-      const ctx = canvas.getContext("2d");
-
-      // Draw the original image
-      ctx.drawImage(img, 0, 0, img.width, img.height);
-
-      // Add background for timestamp
-      ctx.fillStyle = "rgba(0, 0, 0, 0.7)";
-      ctx.fillRect(0, img.height, img.width, 40);
-
-      // Add timestamp text (white with larger font)
-      ctx.font = "bold 20px Arial";
-      ctx.fillStyle = "white";
-      ctx.textAlign = "center";
-      ctx.textBaseline = "middle";
-      ctx.fillText(timestamp, img.width / 2, img.height + 20);
-
-      // Convert to data URL
-      resolve(canvas.toDataURL("image/jpeg", 0.9));
-    };
-    img.src = imageData;
-  });
-}
-
-// Create backup
-function createBackup() {
+// Create backup (modificado para IndexedDB)
+async function createBackup() {
   try {
-    // Create backup object
+    // Get all data from IndexedDB
     const backupData = {
-      activities: activities,
-      config: config,
+      activities: await getAllActivities(),
+      config: await getConfig(),
       timestamp: new Date().toISOString(),
+      version: "1.0",
     };
 
-    // Convert to JSON
-    const jsonData = JSON.stringify(backupData);
+    // Convert to JSON string
+    const jsonString = JSON.stringify(backupData);
 
-    // Create zip file
-    const zip = new JSZip();
-    zip.file("backup.json", jsonData);
+    // Create blob and download
+    const blob = new Blob([jsonString], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
 
-    // Add photos to zip
-    const imgFolder = zip.folder("photos");
-    let photoCount = 0;
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `work_manager_backup_${new Date()
+      .toISOString()
+      .slice(0, 10)}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
 
-    activities.forEach((activity, activityIndex) => {
-      if (activity.photos && activity.photos.length > 0) {
-        activity.photos.forEach((photo, photoIndex) => {
-          // Convert base64 to blob
-          const base64Data = photo.split(",")[1];
-          const blob = b64toBlob(base64Data, "image/jpeg");
-
-          // Add to zip
-          imgFolder.file(
-            `activity_${activityIndex}_photo_${photoIndex}.jpg`,
-            blob
-          );
-          photoCount++;
-        });
-      }
-    });
-
-    // Generate zip file
-    zip.generateAsync({ type: "blob" }).then(function (content) {
-      // Create download link
-      const a = document.createElement("a");
-      const date = new Date();
-      const dateStr = date.toISOString().split("T")[0];
-      a.href = URL.createObjectURL(content);
-      a.download = `work_manager_backup_${dateStr}.zip`;
-      a.click();
-
-      showToast(`Backup criado com sucesso! ${photoCount} fotos incluídas.`);
-    });
+    showToast("Backup criado com sucesso!");
   } catch (error) {
     console.error("Error creating backup:", error);
-    showToast("Erro ao criar backup.");
+    showToast("Erro ao criar backup: " + error.message, "error");
   }
 }
 
-// Convert base64 to blob
-function b64toBlob(b64Data, contentType, sliceSize) {
-  contentType = contentType || "";
-  sliceSize = sliceSize || 512;
+// Restore backup (modificado para IndexedDB)
+async function restoreBackup() {
+  try {
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = ".json";
 
-  const byteCharacters = atob(b64Data);
-  const byteArrays = [];
+    input.onchange = async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
 
-  for (let offset = 0; offset < byteCharacters.length; offset += sliceSize) {
-    const slice = byteCharacters.slice(offset, offset + sliceSize);
+      const reader = new FileReader();
+      reader.onload = async (e) => {
+        try {
+          const backupData = JSON.parse(e.target.result);
 
-    const byteNumbers = new Array(slice.length);
-    for (let i = 0; i < slice.length; i++) {
-      byteNumbers[i] = slice.charCodeAt(i);
-    }
+          // Validate backup file
+          if (!backupData.activities || !backupData.config) {
+            throw new Error("Arquivo de backup inválido");
+          }
 
-    const byteArray = new Uint8Array(byteNumbers);
-    byteArrays.push(byteArray);
-  }
+          // Clear existing data
+          await clearAllActivities();
+          await clearConfig();
 
-  return new Blob(byteArrays, { type: contentType });
-}
+          // Restore activities
+          for (const activity of backupData.activities) {
+            await saveActivity(activity);
+          }
 
-// Restore backup
-function restoreBackup() {
-  const fileInput = document.getElementById("backupFile");
-  const file = fileInput.files[0];
+          // Restore config
+          await saveConfig(backupData.config);
 
-  if (!file) {
-    showToast("Selecione um arquivo de backup primeiro.");
-    return;
-  }
+          // Reload data
+          await loadData();
 
-  if (!file.name.endsWith(".zip")) {
-    showToast("O arquivo deve ser um backup ZIP válido.");
-    return;
-  }
+          // Update UI
+          updateActivitiesTable();
+          updateDashboard();
 
-  const reader = new FileReader();
+          // Update config form
+          if (Object.keys(config).length > 0) {
+            document.getElementById("employeeName").value =
+              config.employeeName || "";
+            document.getElementById("company").value = config.company || "";
+            document.getElementById("department").value =
+              config.department || "";
+            document.getElementById("language").value =
+              config.language || "pt-BR";
+            document.getElementById("theme").value = config.theme || "light";
 
-  reader.onload = function (e) {
-    const zip = new JSZip();
+            // Update user avatar with initials
+            if (config.employeeName) {
+              const names = config.employeeName.split(" ");
+              const initials =
+                names[0].charAt(0) +
+                (names.length > 1 ? names[names.length - 1].charAt(0) : "");
+              document.getElementById("userAvatar").textContent = initials;
+            }
+          }
 
-    zip
-      .loadAsync(e.target.result)
-      .then(function (contents) {
-        // Find and read the backup.json file
-        const backupFile = contents.file("backup.json");
-
-        if (!backupFile) {
-          throw new Error("Arquivo de backup não encontrado no ZIP.");
+          showToast("Backup restaurado com sucesso!");
+        } catch (error) {
+          console.error("Error restoring backup:", error);
+          showToast("Erro ao restaurar backup: " + error.message, "error");
         }
+      };
 
-        return backupFile.async("text");
-      })
-      .then(function (jsonData) {
-        const backupData = JSON.parse(jsonData);
+      reader.readAsText(file);
+    };
 
-        // Restore data
-        activities = backupData.activities || [];
-        config = backupData.config || {};
-
-        // Save to localStorage
-        localStorage.setItem("activities", JSON.stringify(activities));
-        localStorage.setItem("config", JSON.stringify(config));
-
-        // Update UI
-        init();
-
-        showToast("Backup restaurado com sucesso!");
-      })
-      .catch(function (error) {
-        console.error("Error restoring backup:", error);
-        showToast("Erro ao restaurar backup: " + error.message);
-      });
-  };
-
-  reader.readAsArrayBuffer(file);
+    input.click();
+  } catch (error) {
+    console.error("Error restoring backup:", error);
+    showToast("Erro ao restaurar backup: " + error.message, "error");
+  }
 }
 
-// Clear all data
-function clearAllData() {
+// Clear all data (modificado para IndexedDB)
+async function clearAllData() {
   if (
-    confirm(
-      "Tem certeza que deseja limpar todos os dados? Esta ação não pode ser desfeita."
+    !confirm(
+      "Tem certeza que deseja apagar todos os dados? Esta ação não pode ser desfeita."
     )
   ) {
-    localStorage.removeItem("activities");
-    localStorage.removeItem("config");
+    return;
+  }
 
+  try {
+    // Clear all data from IndexedDB
+    await clearAllActivities();
+    await clearConfig();
+
+    // Reset local variables
     activities = [];
     config = {};
 
-    init();
+    // Update UI
+    updateActivitiesTable();
+    updateDashboard();
 
-    showToast("Todos os dados foram removidos.");
+    // Reset config form
+    document.getElementById("employeeName").value = "";
+    document.getElementById("company").value = "";
+    document.getElementById("department").value = "";
+    document.getElementById("language").value = "pt-BR";
+    document.getElementById("theme").value = "light";
+
+    // Reset user avatar
+    document.getElementById("userAvatar").textContent = "U";
+
+    showToast("Todos os dados foram apagados com sucesso!");
+  } catch (error) {
+    console.error("Error clearing data:", error);
+    showToast("Erro ao apagar dados: " + error.message, "error");
   }
 }
 
-// Show toast notification
+// Show toast notification (mantido igual)
 function showToast(message, type = "success") {
   // Remove existing toasts
   const existingToasts = document.querySelectorAll(".toast");
@@ -1294,23 +1712,37 @@ function showToast(message, type = "success") {
   // Create toast element
   const toast = document.createElement("div");
   toast.className = `toast ${type}`;
-
-  // Set icon based on type
-  let icon = "check-circle";
-  if (type === "error") icon = "exclamation-circle";
-  if (type === "warning") icon = "exclamation-triangle";
-
-  toast.innerHTML = `<i class="fas fa-${icon}"></i> ${message}`;
+  toast.innerHTML = `
+        <div class="toast-content">
+            <i class="fas ${
+              type === "success"
+                ? "fa-check-circle"
+                : type === "error"
+                ? "fa-exclamation-circle"
+                : "fa-info-circle"
+            }"></i>
+            <span>${message}</span>
+        </div>
+        <button class="toast-close">
+            <i class="fas fa-times"></i>
+        </button>
+    `;
 
   // Add to DOM
   document.body.appendChild(toast);
 
-  // Remove after 3 seconds
+  // Add close event
+  toast.querySelector(".toast-close").addEventListener("click", () => {
+    toast.remove();
+  });
+
+  // Auto remove after 5 seconds
   setTimeout(() => {
-    toast.classList.add("hide");
-    setTimeout(() => toast.remove(), 300);
-  }, 3000);
+    if (toast.parentNode) {
+      toast.remove();
+    }
+  }, 5000);
 }
 
-// Initialize the app
-init();
+// Initialize the app when DOM is loaded
+document.addEventListener("DOMContentLoaded", init);
