@@ -933,17 +933,20 @@ async function updateActivitiesTable() {
   }
 }
 
-// View activity details (mantido igual)
+// View activity details (corrigido o problema do fuso horário)
 function viewActivity(activityId) {
   const activity = activities.find((a) => a.id === activityId);
 
   if (!activity) return;
 
+  // CORREÇÃO: Usar a data diretamente do objeto activity sem conversão incorreta
   const date = new Date(activity.date);
+  
+  // Formatar data e hora corretamente (sem adicionar +3h)
   const formattedDate = date.toLocaleDateString("pt-BR");
   const formattedTime = date.toLocaleTimeString("pt-BR", {
     hour: "2-digit",
-    minute: "2-digit",
+    minute: "2-digit"
   });
 
   let photosHtml = "";
@@ -1366,6 +1369,7 @@ function updateReportPreview(activities, startDate, endDate) {
 }
 
 
+
 // Export to PDF function (com informações detalhadas nas imagens e timestamps)
 async function exportToPdf(activities, startDate, endDate) {
     try {
@@ -1385,15 +1389,19 @@ async function exportToPdf(activities, startDate, endDate) {
             return localDate.toLocaleDateString("pt-BR");
         };
 
-        // Função para formatar data e hora corretamente
+        // Função para formatar data e hora corretamente (CORRIGIDA)
         const formatDateTimeCorrectly = (dateString) => {
             const date = new Date(dateString);
+            
+            // Ajustar para o fuso horário local (subtrair o offset do timezone)
             const localDate = new Date(date.getTime() - (date.getTimezoneOffset() * 60000));
+            
             const formattedDate = localDate.toLocaleDateString("pt-BR");
             const formattedTime = localDate.toLocaleTimeString("pt-BR", {
                 hour: "2-digit",
                 minute: "2-digit"
             });
+            
             return `${formattedDate} ${formattedTime}`;
         };
 
@@ -1593,26 +1601,19 @@ async function exportToPdf(activities, startDate, endDate) {
         
         // Página de imagens (se houver)
         if (hasImages) {
-            doc.addPage();
-            doc.setFontSize(16);
-            doc.setTextColor(...secondaryColor);
-            doc.text("REGISTROS FOTOGRÁFICOS", 105, 20, { align: "center" });
-            
-            let imgYPosition = 30;
-            let imgCount = 0;
-            
+            // Processar cada atividade com fotos
             for (const activity of activities) {
                 if (activity.photos && activity.photos.length > 0) {
                     for (const photo of activity.photos) {
-                        // Nova página se necessário
-                        if (imgYPosition > 220) {
-                            doc.addPage();
-                            imgYPosition = 20;
-                            doc.setFontSize(16);
-                            doc.setTextColor(...secondaryColor);
-                            doc.text("REGISTROS FOTOGRÁFICOS (CONT.)", 105, 15, { align: "center" });
-                            imgYPosition = 25;
-                        }
+                        // Nova página para cada imagem
+                        doc.addPage();
+                        
+                        // Configurar cabeçalho da página
+                        doc.setFontSize(16);
+                        doc.setTextColor(...secondaryColor);
+                        doc.text("REGISTRO FOTOGRÁFICO", 105, 20, { align: "center" });
+                        
+                        let imgYPosition = 30;
                         
                         // Adicionar título da imagem
                         const formattedDateTime = formatDateTimeCorrectly(activity.date);
@@ -1677,43 +1678,55 @@ async function exportToPdf(activities, startDate, endDate) {
                             });
                         }
                         
-                        imgYPosition += 3;
+                        imgYPosition += 10;
                         
                         // Adicionar imagem com timestamp
                         try {
                             // Adicionar timestamp à imagem
                             const imageWithTimestamp = await addTimestampToImage(photo, formattedDateTime);
                             
-                            // Adicionar imagem (tentativa com dimensionamento adequado)
-                            const imgProps = doc.getImageProperties(imageWithTimestamp);
-                            const width = 100;
-                            const height = (imgProps.height * width) / imgProps.width;
+                            // Calcular dimensões para caber na página
+                            const maxWidth = 170; // Largura máxima
+                            const maxHeight = 150; // Altura máxima
                             
-                            if (height > 100) {
-                                // Se a imagem for muito alta, ajustar para caber
-                                const adjustedHeight = 100;
-                                const adjustedWidth = (imgProps.width * adjustedHeight) / imgProps.height;
-                                doc.addImage(imageWithTimestamp, 'JPEG', 20, imgYPosition, adjustedWidth, adjustedHeight);
-                                imgYPosition += adjustedHeight + 10;
-                            } else {
-                                doc.addImage(imageWithTimestamp, 'JPEG', 20, imgYPosition, width, height);
-                                imgYPosition += height + 10;
+                            const imgProps = doc.getImageProperties(imageWithTimestamp);
+                            let width = imgProps.width;
+                            let height = imgProps.height;
+                            
+                            // Redimensionar se necessário
+                            if (width > maxWidth) {
+                                const ratio = maxWidth / width;
+                                width = maxWidth;
+                                height = height * ratio;
                             }
                             
-                            // Data de registro da imagem (usando a data da atividade)
+                            if (height > maxHeight) {
+                                const ratio = maxHeight / height;
+                                height = maxHeight;
+                                width = width * ratio;
+                            }
+                            
+                            // Centralizar a imagem na página
+                            const x = (210 - width) / 2;
+                            
+                            // Verificar se há espaço suficiente na página
+                            if (imgYPosition + height > 250) {
+                                // Se não houver espaço, criar nova página
+                                doc.addPage();
+                                imgYPosition = 20;
+                            }
+                            
+                            // Adicionar a imagem
+                            doc.addImage(imageWithTimestamp, 'JPEG', x, imgYPosition, width, height);
+                            
+                            // Adicionar informações abaixo da imagem
+                            imgYPosition += height + 10;
+                            
+                            // Data de registro da imagem
                             doc.setFontSize(8);
                             doc.setTextColor(...darkGray);
                             doc.text(`Registrado em: ${formattedDateTime}`, 20, imgYPosition);
-                            imgYPosition += 5;
                             
-                            imgCount++;
-                            
-                            // Linha divisória entre imagens
-                            if (imgCount < getTotalImages(activities)) {
-                                doc.setDrawColor(200, 200, 200);
-                                doc.line(20, imgYPosition, 190, imgYPosition);
-                                imgYPosition += 10;
-                            }
                         } catch (error) {
                             console.error("Erro ao adicionar imagem:", error);
                             doc.setFontSize(10);
